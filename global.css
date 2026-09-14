@@ -1,0 +1,113 @@
+@import "tailwindcss/theme.css" layer(theme);
+@import "tailwindcss/preflight.css" layer(base);
+@import "tailwindcss/utilities.css";
+
+@import "nativewind/theme";
+
+@source "./src/**/*.{ts,tsx}";
+
+@theme {
+  /* Primary content-card radius (16-20px range): bigger than rounded-2xl, softer than rounded-3xl */
+  --radius-card: 20px;
+}
+
+:root {
+  /* Kept in sync with dashboard/app/globals.css (teal/cyan palette). */
+  --text: oklch(0.3772 0.0619 212.6640);
+  --background: oklch(0.9491 0.0085 197.0126);
+
+  --primary: oklch(0.5624 0.0947 203.2755);
+  --primary-foreground: oklch(1.0000 0 0);
+
+  --secondary: oklch(0.9244 0.0181 196.8450);
+  --secondary-foreground: oklch(0.3772 0.0619 212.6640);
+
+  --accent: oklch(0.9021 0.0297 201.8915);
+  --accent-foreground: oklch(0.3772 0.0619 212.6640);
+
+  --muted: oklch(0.9295 0.0107 196.9723);
+  --muted-foreground: oklch(0.5428 0.0594 201.5662);
+
+  --card: oklch(0.9724 0.0053 197.0692);
+  --card-foreground: oklch(0.3772 0.0619 212.6640);
+
+  --border: oklch(0.8931 0.0205 204.4136);
+  --input: oklch(0.9244 0.0181 196.8450);
+  --ring: oklch(0.5624 0.0947 203.2755);
+
+  --destructive: oklch(0.5732 0.1901 25.5409);
+  --destructive-foreground: oklch(1.0000 0 0);
+}
+
+/*
+ * React Native has no DOM, so there's nothing to add a literal `.dark`
+ * class to (unlike the website, where next-themes toggles `<html class="dark">`).
+ * NativeWind resolves `dark:` utility variants against the live Appearance
+ * state via `@media (prefers-color-scheme: dark)`, so the token overrides
+ * below use the same mechanism to actually respond to the OS/in-app theme
+ * (set via `Appearance.setColorScheme` in `useThemePreference`).
+ */
+@media (prefers-color-scheme: dark) {
+  :root {
+    /* Kept in sync with dashboard/app/globals.css `.dark` block. */
+    --text: oklch(0.9300 0.0250 195.0354);
+    --background: oklch(0.2068 0.0247 224.4533);
+
+    /* Intentionally same as light mode's primary (mobile-only choice — dashboard's
+       dark mode still brightens primary for its own dark palette). */
+    --primary: oklch(0.5624 0.0947 203.2755);
+    --primary-foreground: oklch(1.0000 0 0);
+
+    --secondary: oklch(0.3775 0.0564 216.5010);
+    --secondary-foreground: oklch(0.9300 0.0250 195.0354);
+
+    --accent: oklch(0.3775 0.0564 216.5010);
+    --accent-foreground: oklch(0.9300 0.0250 195.0354);
+
+    --muted: oklch(0.2894 0.0412 218.8153);
+    --muted-foreground: oklch(0.7200 0.0800 203.2755);
+
+    --card: oklch(0.2293 0.0276 216.0674);
+    --card-foreground: oklch(0.9300 0.0250 195.0354);
+
+    --border: oklch(0.3775 0.0564 216.5010);
+    --input: oklch(0.3775 0.0564 216.5010);
+    --ring: oklch(0.5624 0.0947 203.2755);
+
+    --destructive: oklch(0.6168 0.2086 25.8088);
+    --destructive-foreground: oklch(0.9612 0 0);
+  }
+}
+
+@theme inline {
+  --color-text: var(--text);
+  --color-background: var(--background);
+
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+
+  --color-destructive: var(--destructive);
+  --color-destructive-foreground: var(--destructive-foreground);
+
+  /* Loaded via useFonts() in src/app/_layout.tsx */
+  --font-nexa-light: 'Nexa-Light';
+  --font-nexa: 'Nexa-Regular';
+  --font-nexa-bold: 'Nexa-Bold';
+  --font-nexa-black: 'Nexa-Black';
+}

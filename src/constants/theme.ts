@@ -3,24 +3,58 @@
  * There are many other ways to style your app. For example, [Nativewind](https://www.nativewind.dev/), [Tamagui](https://tamagui.dev/), [unistyles](https://reactnativeunistyles.vercel.app), etc.
  */
 
-import '@/global.css';
-
 import { Platform } from 'react-native';
 
+/**
+ * Kept in sync with the CSS variables in `global.css` (`--text`, `--background`,
+ * `--primary`, `--secondary`, `--accent`, `--muted`, `--card`, `--border`, `--ring`,
+ * `--destructive`, and their `-foreground` pairs). NativeWind/Tailwind classNames
+ * should prefer those `oklch()` tokens directly (e.g. `bg-primary`); this hex mirror
+ * only exists for the plain React Native `style` prop path (`ThemedText`/`ThemedView`),
+ * which can't consume CSS variables.
+ */
 export const Colors = {
   light: {
-    text: '#000000',
-    background: '#ffffff',
-    backgroundElement: '#F0F0F3',
-    backgroundSelected: '#E0E1E6',
-    textSecondary: '#60646C',
+    text: '#0A4A55',
+    background: '#E8F0F0',
+    primary: '#06858E',
+    primaryForeground: '#FFFFFF',
+    secondary: '#D9EAEA',
+    secondaryForeground: '#0A4A55',
+    accent: '#C9E5E7',
+    accentForeground: '#0A4A55',
+    muted: '#E0EAEA',
+    mutedForeground: '#427A7E',
+    card: '#F2F7F7',
+    cardForeground: '#0A4A55',
+    border: '#CDE0E2',
+    ring: '#06858E',
+    destructive: '#D13838',
+    destructiveForeground: '#FFFFFF',
+    backgroundElement: '#E0EAEA',
+    backgroundSelected: '#D9EAEA',
+    textSecondary: '#427A7E',
   },
   dark: {
-    text: '#ffffff',
-    background: '#000000',
-    backgroundElement: '#212225',
-    backgroundSelected: '#2E3135',
-    textSecondary: '#B0B4BA',
+    text: '#D6EDED',
+    background: '#0A1A20',
+    primary: '#06858E',
+    primaryForeground: '#FFFFFF',
+    secondary: '#164955',
+    secondaryForeground: '#D6EDED',
+    accent: '#164955',
+    accentForeground: '#D6EDED',
+    muted: '#0F3039',
+    mutedForeground: '#849E9E',
+    card: '#0C2025',
+    cardForeground: '#D6EDED',
+    border: '#164955',
+    ring: '#06858E',
+    destructive: '#E83C3C',
+    destructiveForeground: '#F2F2F2',
+    backgroundElement: '#0F3039',
+    backgroundSelected: '#164955',
+    textSecondary: '#849E9E',
   },
 } as const;
 

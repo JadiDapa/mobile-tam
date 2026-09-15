@@ -23,12 +23,15 @@ import {
 import {
   eachDateInRange,
   formatDuration,
+  formatLateDuration,
   formatShortDate,
   formatTime,
+  lateMinutesFor,
 } from "@/lib/date";
 import {
   useAttendanceHistoryQuery,
   useLeaveRequestsQuery,
+  useSettingsQuery,
 } from "@/lib/queries";
 
 const TABS: ("Semua" | DayStatus)[] = [
@@ -41,7 +44,7 @@ const TABS: ("Semua" | DayStatus)[] = [
 
 const WORK_MODE_LABEL: Record<string, string> = {
   HADIR_DIKANTOR: "Kantor Pusat",
-  DINAS_LUAR: "Dinas Luar",
+  LUAR_RADIUS: "Luar Radius",
 };
 
 const LEAVE_TYPE_TO_STATUS: Record<string, DayStatus> = {
@@ -66,6 +69,9 @@ export default function HistoriScreen() {
     to: range.end,
   });
   const leave = useLeaveRequestsQuery();
+  const settings = useSettingsQuery();
+
+  const workDays = settings.data?.workDays ?? [];
 
   const records = useMemo<DayRecord[]>(() => {
     if (!attendance.data) return [];
@@ -89,6 +95,11 @@ export default function HistoriScreen() {
                 WORK_MODE_LABEL[day.checkIn.workMode] ?? day.checkIn.workMode,
               status: "Hadir",
               isLate: day.checkIn.isLate,
+              lateBy: day.checkIn.isLate
+                ? formatLateDuration(
+                    lateMinutesFor(day.checkIn.timestamp, date, workDays),
+                  )
+                : null,
               checkIn: formatTime(day.checkIn.timestamp),
               checkOut: day.checkOut
                 ? formatTime(day.checkOut.timestamp)
@@ -117,6 +128,7 @@ export default function HistoriScreen() {
               location: "-",
               status: LEAVE_TYPE_TO_STATUS[leaveOnDay.type],
               isLate: false,
+              lateBy: null,
               checkIn: null,
               checkOut: null,
               totalHours: "--:--",
@@ -127,7 +139,7 @@ export default function HistoriScreen() {
         return [];
       },
     );
-  }, [attendance.data, leave.data, range]);
+  }, [attendance.data, leave.data, range, workDays]);
 
   const visibleRecords = (
     activeTab === "Semua"

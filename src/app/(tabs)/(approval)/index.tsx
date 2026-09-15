@@ -70,10 +70,13 @@ export default function ReviewScreen() {
   const me = useMeQuery();
   const role = me.data?.role;
 
-  const canSeeLeave = role === 'ADMIN' || role === 'SUPERVISOR' || role === 'MANAGER';
-  const canSeeOvertime = role === 'ADMIN' || role === 'SUPERVISOR';
-  const canSeeFieldAssignment = role === 'ADMIN';
-  const canSeeAttendance = role === 'ADMIN';
+  // Admin tidak lagi ikut approval apa pun — cuma supervisor & manager yang
+  // punya giliran (karyawan/admin mengajukan -> supervisor; supervisor
+  // mengajukan -> manager). Lihat AGENTS.md perubahan alur approval.
+  const canSeeLeave = role === 'SUPERVISOR' || role === 'MANAGER';
+  const canSeeOvertime = role === 'SUPERVISOR' || role === 'MANAGER';
+  const canSeeFieldAssignment = role === 'MANAGER';
+  const canSeeAttendance = role === 'SUPERVISOR' || role === 'MANAGER';
 
   const visibleTypeTabs = TYPE_TABS.filter((tab) => {
     if (tab === 'Semua') return true;

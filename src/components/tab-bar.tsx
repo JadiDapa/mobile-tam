@@ -31,9 +31,10 @@ const ROUTE_META: Record<
   },
 };
 
-/** Tab yang hanya tampil untuk role tertentu — tab lain di ROUTE_META tampil untuk semua role. */
-const ROLE_ONLY_ROUTES: Record<string, ("ADMIN" | "SUPERVISOR" | "MANAGER")[]> = {
-  "(approval)": ["ADMIN", "SUPERVISOR", "MANAGER"],
+/** Tab yang hanya tampil untuk role tertentu — tab lain di ROUTE_META tampil untuk semua role.
+ * Admin tidak lagi ikut approval apa pun, jadi tidak butuh tab Review. */
+const ROLE_ONLY_ROUTES: Record<string, ("SUPERVISOR" | "MANAGER")[]> = {
+  "(approval)": ["SUPERVISOR", "MANAGER"],
 };
 
 export function TabBar({ state, navigation }: BottomTabBarProps) {

@@ -21,6 +21,7 @@ const dangerOverlayClass =
 
 import { FormInput } from "@/components/form-input";
 import { Icon } from "@/components/icon";
+import { formatLateDuration, lateMinutesFor } from "@/lib/date";
 import { formatDistance, haversineDistance } from "@/lib/geo";
 import {
   useFaceStatusQuery,
@@ -104,6 +105,7 @@ export default function AttendanceCaptureScreen() {
   const [coords, setCoords] = useState<Coords | null>(null);
   const [locating, setLocating] = useState(true);
   const [locationError, setLocationError] = useState<string | null>(null);
+  const [address, setAddress] = useState<string | null>(null);
   const [photo, setPhoto] = useState<{ uri: string } | null>(null);
   const [detail, setDetail] = useState("");
   const [submitting, setSubmitting] = useState(false);
@@ -118,9 +120,27 @@ export default function AttendanceCaptureScreen() {
   const startLocating = useCallback(() => {
     setLocating(true);
     setLocationError(null);
+    setAddress(null);
 
     readPosition(maxAccuracyMeters)
-      .then(setCoords)
+      .then((result) => {
+        setCoords(result);
+
+        Location.reverseGeocodeAsync({
+          latitude: result.latitude,
+          longitude: result.longitude,
+        })
+          .then((places) => {
+            const place = places[0];
+            if (!place) return;
+
+            const parts = [place.street, place.subregion, place.city].filter(
+              (part): part is string => Boolean(part),
+            );
+            if (parts.length > 0) setAddress(parts.join(", "));
+          })
+          .catch(() => {});
+      })
       .catch((error: Error) => setLocationError(error.message))
       .finally(() => setLocating(false));
   }, [maxAccuracyMeters]);
@@ -223,7 +243,23 @@ export default function AttendanceCaptureScreen() {
         }
 
         setHasSubmitted(true);
-        Alert.alert(result.message, result.warning ?? undefined, [
+
+        const now = new Date();
+        const lateMinutes =
+          type === "CHECK_IN"
+            ? lateMinutesFor(
+                now.toISOString(),
+                now.toISOString().slice(0, 10),
+                settings.data?.workDays ?? [],
+              )
+            : 0;
+        const lateLine =
+          lateMinutes > 0
+            ? `Terlambat ${formatLateDuration(lateMinutes)}.`
+            : null;
+        const message = [result.warning, lateLine].filter(Boolean).join(" ");
+
+        Alert.alert(result.message, message || undefined, [
           { text: "OK", onPress: () => router.back() },
         ]);
       },
@@ -352,7 +388,12 @@ export default function AttendanceCaptureScreen() {
             resizeMode="cover"
           />
         ) : (
-          <CameraView ref={cameraRef} style={{ flex: 1 }} facing="front" />
+          <CameraView
+            ref={cameraRef}
+            style={{ flex: 1 }}
+            facing="front"
+            mirror
+          />
         )}
       </View>
 
@@ -363,7 +404,31 @@ export default function AttendanceCaptureScreen() {
           className="absolute inset-0 items-center justify-center"
           style={{ paddingBottom: 120 }}
         >
-          <View className="aspect-square w-[83%] rounded-[40px] border-2 border-white/80" />
+          <View className="relative aspect-square w-[83%]">
+            <Image
+              source={require("@/assets/images/outline.png")}
+              className="absolute left-0 top-0 size-14"
+              resizeMode="contain"
+            />
+            <Image
+              source={require("@/assets/images/outline.png")}
+              className="absolute right-0 top-0 size-14"
+              style={{ transform: [{ rotate: "90deg" }] }}
+              resizeMode="contain"
+            />
+            <Image
+              source={require("@/assets/images/outline.png")}
+              className="absolute bottom-0 right-0 size-14"
+              style={{ transform: [{ rotate: "180deg" }] }}
+              resizeMode="contain"
+            />
+            <Image
+              source={require("@/assets/images/outline.png")}
+              className="absolute bottom-0 left-0 size-14"
+              style={{ transform: [{ rotate: "270deg" }] }}
+              resizeMode="contain"
+            />
+          </View>
         </View>
       )}
 
@@ -379,88 +444,13 @@ export default function AttendanceCaptureScreen() {
           <Icon name="chevron-back" size={22} color="#ffffff" />
         </Pressable>
 
-        {photo ? (
+        {photo && (
           <View className="flex-row items-center gap-1.5 rounded-full bg-black/50 px-2.5 py-1">
             <Icon name="checkmark-circle-outline" size={14} color="#ffffff" />
             <Text className="text-xs font-medium text-white">Foto diambil</Text>
           </View>
-        ) : coords ? (
-          <View
-            className={
-              isAccurate
-                ? "flex-row items-center gap-1.5 rounded-full bg-emerald-500/20 px-2.5 py-1"
-                : "flex-row items-center gap-1.5 rounded-full bg-red-500/25 px-2.5 py-1"
-            }
-          >
-            <Text
-              className={
-                isAccurate ? "text-xs text-emerald-100" : "text-xs text-red-100"
-              }
-            >
-              ±{Math.round(coords.accuracy)} m{locating ? " · memperbarui" : ""}
-            </Text>
-          </View>
-        ) : (
-          <View className="flex-row items-center gap-1.5 rounded-full bg-black/50 px-2.5 py-1">
-            <Icon name="location-outline" size={14} color="#ffffff" />
-            <Text className="text-xs text-white">
-              {locating ? "Membaca lokasi..." : "Lokasi belum terbaca"}
-            </Text>
-          </View>
         )}
       </View>
-
-      {/* Danger overlay: masalah lokasi, sebelum foto diambil */}
-      {!photo && !coords && !locating && (
-        <View
-          className={dangerOverlayClass}
-          style={{
-            position: "absolute",
-            left: 12,
-            right: 12,
-            top: insets.top + 64,
-          }}
-        >
-          <Text className="text-xs text-white">
-            {locationError ?? "Lokasi belum terbaca"}
-          </Text>
-          <Pressable
-            onPress={startLocating}
-            className="self-start rounded-md border border-white/50 px-3 py-1.5"
-          >
-            <Text className="text-xs font-medium text-white">
-              Baca ulang lokasi
-            </Text>
-          </Pressable>
-        </View>
-      )}
-
-      {!photo && coords && !isAccurate && (
-        <View
-          className={dangerOverlayClass}
-          style={{
-            position: "absolute",
-            left: 12,
-            right: 12,
-            top: insets.top + 64,
-          }}
-        >
-          <Text className="text-xs text-white">
-            Akurasi lokasi terlalu rendah (±{Math.round(coords.accuracy)} m,
-            maksimal ±{maxAccuracyMeters} m). Pindah ke area terbuka lalu baca
-            ulang lokasinya.
-          </Text>
-          <Pressable
-            onPress={startLocating}
-            disabled={locating}
-            className="self-start rounded-md border border-white/50 px-3 py-1.5"
-          >
-            <Text className="text-xs font-medium text-white">
-              Baca ulang lokasi
-            </Text>
-          </Pressable>
-        </View>
-      )}
 
       {/* Danger overlay: di luar radius kantor, baru muncul setelah foto diambil */}
       {photo && isOutside && isAccurate && (
@@ -501,9 +491,71 @@ export default function AttendanceCaptureScreen() {
       {/* Tombol jepret, hanya saat kamera masih live */}
       {!photo && (
         <View
-          className="absolute inset-x-0 bottom-0 items-center gap-3"
+          className="absolute inset-x-0 bottom-0 items-center gap-4 px-4"
           style={{ paddingBottom: insets.bottom + 32 }}
         >
+          {/* Kartu lokasi: pengganti pil status di bar atas, dengan info lebih lengkap */}
+          <View className="w-full gap-2 rounded-2xl bg-black/55 p-3">
+            <View className="flex-row items-center gap-2">
+              <Icon name="location-outline" size={16} color="#ffffff" />
+              <Text className="flex-1 text-xs font-medium text-white">
+                Lokasi Saat Ini
+              </Text>
+              <Pressable
+                onPress={startLocating}
+                disabled={locating}
+                className="rounded-full bg-white/15 p-1.5 disabled:opacity-50"
+              >
+                <Icon name="refresh-outline" size={14} color="#ffffff" />
+              </Pressable>
+            </View>
+
+            {locating && !coords ? (
+              <View className="flex-row items-center gap-2">
+                <ActivityIndicator size="small" color="#ffffff" />
+                <Text className="text-xs text-white/80">
+                  Membaca lokasi...
+                </Text>
+              </View>
+            ) : coords ? (
+              <>
+                <Text className="text-xs text-white" numberOfLines={2}>
+                  {address ??
+                    `${coords.latitude.toFixed(6)}, ${coords.longitude.toFixed(6)}`}
+                </Text>
+                <View className="flex-row items-center gap-1.5">
+                  <View
+                    className={
+                      isAccurate
+                        ? "size-1.5 rounded-full bg-emerald-400"
+                        : "size-1.5 rounded-full bg-red-400"
+                    }
+                  />
+                  <Text
+                    className={
+                      isAccurate
+                        ? "text-xs text-emerald-200"
+                        : "text-xs text-red-200"
+                    }
+                  >
+                    Akurasi ±{Math.round(coords.accuracy)} m
+                    {!isAccurate ? ` (maks ±${maxAccuracyMeters} m)` : ""}
+                    {locating ? " · memperbarui" : ""}
+                  </Text>
+                </View>
+                {!isAccurate && (
+                  <Text className="text-[11px] text-white/70">
+                    Pindah ke area terbuka lalu baca ulang lokasi.
+                  </Text>
+                )}
+              </>
+            ) : (
+              <Text className="text-xs text-red-200">
+                {locationError ?? "Lokasi belum terbaca"}
+              </Text>
+            )}
+          </View>
+
           <Text className="text-xs text-white/80">
             {coords && !isAccurate
               ? "Akurasi lokasi kurang"

@@ -12,6 +12,8 @@ export type DayRecord = {
   location: string;
   status: DayStatus;
   isLate: boolean;
+  /** "1j 30m" / "45m" — how late the check-in was, when isLate is true. */
+  lateBy: string | null;
   checkIn: string | null;
   checkOut: string | null;
   totalHours: string;
@@ -35,7 +37,11 @@ export function AttendanceCard({ record }: { record: DayRecord }) {
 
       <View className="flex-1 justify-center gap-3">
         <View className="flex-row">
-          <StatColumn label="Check In" value={record.checkIn ?? "--:--"} />
+          <StatColumn
+            label="Check In"
+            value={record.checkIn ?? "--:--"}
+            danger={record.isLate}
+          />
           <StatColumn
             label="Check out"
             value={record.checkOut ?? "--:--"}
@@ -45,13 +51,23 @@ export function AttendanceCard({ record }: { record: DayRecord }) {
         </View>
 
         <View className="flex-row items-center gap-1.5">
-          <Icon name="location-outline" size={16} tone="muted" />
+          <Icon
+            name="location-outline"
+            size={16}
+            tone={record.isLate ? "destructive" : "muted"}
+          />
           <Text
             numberOfLines={1}
-            className="flex-1 text-sm text-muted-foreground"
+            className={
+              record.isLate
+                ? "flex-1 text-sm font-semibold text-red-600 dark:text-red-400"
+                : "flex-1 text-sm text-muted-foreground"
+            }
           >
             {record.location}
-            {record.isLate ? " · Terlambat" : ""}
+            {record.isLate
+              ? ` · Terlambat${record.lateBy ? ` ${record.lateBy}` : ""}`
+              : ""}
           </Text>
         </View>
       </View>

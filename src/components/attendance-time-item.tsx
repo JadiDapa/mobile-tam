@@ -11,7 +11,7 @@ export function AttendanceTimeItem({
   value: string;
   /** `lg` for the hero check-in/check-out figures, `sm` for a derived stat like total hours. */
   size?: 'lg' | 'sm';
-  tone?: 'default' | 'primary' | 'muted';
+  tone?: 'default' | 'primary' | 'muted' | 'danger';
 }) {
   const valueClass =
     size === 'lg'
@@ -19,7 +19,9 @@ export function AttendanceTimeItem({
         ? 'text-2xl font-bold text-primary'
         : tone === 'muted'
           ? 'text-2xl font-bold text-muted-foreground'
-          : 'text-2xl font-bold text-text'
+          : tone === 'danger'
+            ? 'text-2xl font-bold text-red-600 dark:text-red-400'
+            : 'text-2xl font-bold text-text'
       : 'text-base font-semibold text-text';
 
   return (

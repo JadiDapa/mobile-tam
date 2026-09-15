@@ -10,6 +10,7 @@ export type Me = {
   role: 'EMPLOYEE' | 'ADMIN' | 'SUPERVISOR' | 'MANAGER';
   phone: string | null;
   position: string | null;
+  profileImageUrl: string | null;
   isActive: boolean;
   createdAt: string;
 };
@@ -124,7 +125,7 @@ export type PendingLeaveRequest = LeaveRequest & { user: RequesterSummary };
 
 export type PendingOvertimeRequest = OvertimeRecord & { user: RequesterSummary };
 
-export type WorkMode = 'HADIR_DIKANTOR' | 'DINAS_LUAR' | 'SAKIT' | 'IZIN' | 'CUTI';
+export type WorkMode = 'HADIR_DIKANTOR' | 'LUAR_RADIUS' | 'SAKIT' | 'IZIN' | 'CUTI';
 
 /** Satu baris Attendance luar radius yang menunggu verifikasi admin. */
 export type PendingAttendanceApproval = {
@@ -541,7 +542,7 @@ export type ApprovalLogEntry = {
   id: string;
   type: 'LEAVE' | 'OVERTIME' | 'FIELD_ASSIGNMENT';
   requestId: string;
-  stage: 'ADMIN' | 'SUPERVISOR' | 'MANAGER';
+  stage: 'SUPERVISOR' | 'MANAGER';
   status: 'APPROVED' | 'REJECTED';
   note: string | null;
   requesterId: string;
@@ -580,9 +581,9 @@ export function usePendingReviewCount() {
   const me = useMeQuery();
   const role = me.data?.role;
 
-  const canSeeLeave = role === 'ADMIN' || role === 'SUPERVISOR' || role === 'MANAGER';
-  const canSeeOvertime = role === 'ADMIN' || role === 'SUPERVISOR';
-  const canSeeFieldAssignment = role === 'ADMIN';
+  const canSeeLeave = role === 'SUPERVISOR' || role === 'MANAGER';
+  const canSeeOvertime = role === 'SUPERVISOR' || role === 'MANAGER';
+  const canSeeFieldAssignment = role === 'MANAGER';
 
   const leave = usePendingLeaveApprovalsQuery(canSeeLeave);
   const overtime = usePendingOvertimeApprovalsQuery(canSeeOvertime);
@@ -624,7 +625,10 @@ export function useEnrollFaceMutation() {
         '/api/face',
         { method: 'POST', body: formData },
       ),
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['face-status'] }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['face-status'] });
+      queryClient.invalidateQueries({ queryKey: ['me'] });
+    },
   });
 }
 
@@ -638,7 +642,10 @@ export function useResetFaceMutation() {
         '/api/face',
         { method: 'DELETE' },
       ),
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['face-status'] }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['face-status'] });
+      queryClient.invalidateQueries({ queryKey: ['me'] });
+    },
   });
 }
 

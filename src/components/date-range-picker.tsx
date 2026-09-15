@@ -43,9 +43,9 @@ type DateRangePickerProps = {
   value: DateRange;
   onClose: () => void;
   onApply: (range: DateRange) => void;
-  /** Tanggal paling awal yang boleh dipilih (ISO yyyy-MM-dd) — dipakai Cuti,
-   * yang wajib diajukan minimal 30 hari sebelumnya. Tanggal sebelum ini
-   * ditampilkan abu-abu dan tidak bisa ditekan. */
+  /** Tanggal paling awal yang boleh dipilih (ISO yyyy-MM-dd) — dipakai Cuti
+   * (min H-30) dan Izin (min H-2). Tanggal sebelum ini ditampilkan abu-abu
+   * dan tidak bisa ditekan. */
   minDate?: string;
   /** Bulan yang ditampilkan saat kalender pertama dibuka. */
   initialMonth?: string;

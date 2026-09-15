@@ -32,8 +32,10 @@ import {
 } from "@/constants/status";
 import {
   formatDuration,
+  formatLateDuration,
   formatLongIndonesianDate,
   formatTime,
+  lateMinutesFor,
 } from "@/lib/date";
 import {
   useAttendanceHistoryQuery,
@@ -105,6 +107,13 @@ export default function BerandaScreen() {
 
   const hasCheckedIn = todayCheckIn !== null;
   const hasCheckedOut = todayCheckOut !== null;
+
+  const workDays = settings.data?.workDays ?? [];
+  const isTodayLate = todayRecord?.checkIn?.isLate ?? false;
+  const todayLateLabel =
+    isTodayLate && todayCheckIn
+      ? formatLateDuration(lateMinutesFor(todayCheckIn, today, workDays))
+      : null;
 
   const todaysOvertime = useMemo(
     () =>
@@ -195,6 +204,16 @@ export default function BerandaScreen() {
             : "-",
           status: "Hadir",
           isLate: d.checkIn?.isLate ?? false,
+          lateBy:
+            d.checkIn?.isLate && d.checkIn
+              ? formatLateDuration(
+                  lateMinutesFor(
+                    d.checkIn.timestamp,
+                    d.workDate.slice(0, 10),
+                    workDays,
+                  ),
+                )
+              : null,
           checkIn: d.checkIn ? formatTime(d.checkIn.timestamp) : null,
           checkOut: d.checkOut ? formatTime(d.checkOut.timestamp) : null,
           totalHours:
@@ -202,7 +221,7 @@ export default function BerandaScreen() {
               ? formatDuration(d.checkIn.timestamp, d.checkOut.timestamp)
               : "--:--",
         })),
-    [month.data],
+    [month.data, workDays],
   );
 
   const leaveRequestCards = useMemo(
@@ -270,7 +289,7 @@ export default function BerandaScreen() {
         <View className="bg-primary px-5 pb-24 pt-safe-offset-7">
           <View className="flex-row items-center justify-between">
             <View className="flex-1 flex-row items-center gap-3">
-              <Avatar name={user?.name ?? ""} imageUri={null} />
+              <Avatar name={user?.name ?? ""} imageUri={user?.profileImageUrl ?? null} />
 
               <View className="flex-1">
                 <Text
@@ -333,23 +352,44 @@ export default function BerandaScreen() {
                   </Text>
                 </Pressable>
               ) : (
-                <View className="flex-row items-stretch">
-                  <AttendanceTimeItem
-                    label="Check In"
-                    value={todayCheckIn ? formatTime(todayCheckIn) : "--:--"}
-                    tone={todayCheckIn ? "primary" : "muted"}
-                  />
-                  <View className="w-px border-l border-dashed border-border" />
-                  <AttendanceTimeItem
-                    label="Check Out"
-                    value={todayCheckOut ? formatTime(todayCheckOut) : "--:--"}
-                    tone={todayCheckOut ? "primary" : "muted"}
-                  />
-                  <View className="w-px border-l border-dashed border-border" />
-                  <AttendanceTimeItem
-                    label="Total Jam"
-                    value={formatDuration(todayCheckIn, todayCheckOut)}
-                  />
+                <View className="gap-3">
+                  <View className="flex-row items-stretch">
+                    <AttendanceTimeItem
+                      label="Check In"
+                      value={
+                        todayCheckIn ? formatTime(todayCheckIn) : "--:--"
+                      }
+                      tone={
+                        isTodayLate
+                          ? "danger"
+                          : todayCheckIn
+                            ? "primary"
+                            : "muted"
+                      }
+                    />
+                    <View className="w-px border-l border-dashed border-border" />
+                    <AttendanceTimeItem
+                      label="Check Out"
+                      value={
+                        todayCheckOut ? formatTime(todayCheckOut) : "--:--"
+                      }
+                      tone={todayCheckOut ? "primary" : "muted"}
+                    />
+                    <View className="w-px border-l border-dashed border-border" />
+                    <AttendanceTimeItem
+                      label="Total Jam"
+                      value={formatDuration(todayCheckIn, todayCheckOut)}
+                    />
+                  </View>
+
+                  {isTodayLate && (
+                    <View className="flex-row items-center justify-center gap-1.5 self-center rounded-full bg-red-50 px-3 py-1.5 dark:bg-red-500/15">
+                      <Icon name="alert-circle-outline" size={14} tone="destructive" />
+                      <Text className="text-xs font-semibold text-red-600 dark:text-red-400">
+                        Terlambat{todayLateLabel ? ` ${todayLateLabel}` : ""}
+                      </Text>
+                    </View>
+                  )}
                 </View>
               )}
 

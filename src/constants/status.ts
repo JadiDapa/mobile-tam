@@ -134,9 +134,14 @@ export const EMPLOYMENT_STATUS_LABEL: Record<EmploymentStatus, string> = {
 export const EMPLOYMENT_STATUS_OPTIONS: EmploymentStatus[] = ['PKWT', 'PKWTT'];
 
 /** Mode kerja yang bisa dipilih admin saat menyetujui absensi luar radius. */
+/**
+ * `LUAR_RADIUS` BEDA dari "Dinas Luar" (Pengajuan Dinas Luar) — ini klaim
+ * sepihak karyawan saat GPS-nya di luar radius kantor pas absen, bukan
+ * penugasan dinas luar yang sudah direncanakan & disetujui duluan.
+ */
 export const WORK_MODE_LABEL: Record<WorkMode, string> = {
   HADIR_DIKANTOR: 'Hadir di Kantor',
-  DINAS_LUAR: 'Dinas Luar',
+  LUAR_RADIUS: 'Luar Radius',
   SAKIT: 'Sakit',
   IZIN: 'Izin',
   CUTI: 'Cuti',
@@ -144,7 +149,7 @@ export const WORK_MODE_LABEL: Record<WorkMode, string> = {
 
 export const WORK_MODE_OPTIONS: WorkMode[] = [
   'HADIR_DIKANTOR',
-  'DINAS_LUAR',
+  'LUAR_RADIUS',
   'SAKIT',
   'IZIN',
   'CUTI',

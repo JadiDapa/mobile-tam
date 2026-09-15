@@ -1,7 +1,9 @@
 import * as DocumentPicker from 'expo-document-picker';
-import { File } from 'expo-file-system';
+import { File, Paths } from 'expo-file-system';
+import * as Sharing from 'expo-sharing';
+import { useAuth } from '@clerk/expo';
 import { useState } from 'react';
-import { ActivityIndicator, Alert, Linking, Pressable, ScrollView, View } from 'react-native';
+import { ActivityIndicator, Alert, Pressable, ScrollView, View } from 'react-native';
 import { Text } from '@/components/ui/text';
 
 import { Icon, type IoniconsIconName } from '@/components/icon';
@@ -11,6 +13,8 @@ import {
   type AdministrativeDocument,
   type AdministrativeDocumentField,
 } from '@/lib/queries';
+
+const API_URL = process.env.EXPO_PUBLIC_API_URL;
 
 const ATTACHMENT_TYPES = ['image/jpeg', 'image/png', 'image/webp', 'application/pdf'];
 
@@ -42,7 +46,34 @@ const DOCUMENT_ROWS: DocumentRow[] = [
 export default function EmployeeDataDocumentsScreen() {
   const profile = useProfileDataQuery();
   const updateMutation = useUpdateDocumentMutation();
+  const { getToken } = useAuth();
   const [uploadingField, setUploadingField] = useState<AdministrativeDocumentField | null>(null);
+  const [viewingField, setViewingField] = useState<AdministrativeDocumentField | null>(null);
+
+  async function handleView(row: DocumentRow, url: string) {
+    // `/api/images/...` butuh Bearer token dashboard — tidak bisa dibuka
+    // langsung lewat Linking.openURL (browser eksternal tidak bawa sesi).
+    // Unduh dulu dengan token, baru buka lewat share sheet.
+    setViewingField(row.field);
+    try {
+      const token = await getToken();
+      const destination = new File(Paths.cache, url.split('/').pop() ?? `${row.field}.dat`);
+      const downloaded = await File.downloadFileAsync(`${API_URL}${url}`, destination, {
+        headers: { Authorization: `Bearer ${token}` },
+        idempotent: true,
+      });
+
+      if (await Sharing.isAvailableAsync()) {
+        await Sharing.shareAsync(downloaded.uri);
+      } else {
+        Alert.alert('Tidak Didukung', 'Perangkat ini tidak bisa membuka dokumen.');
+      }
+    } catch (error) {
+      Alert.alert('Gagal Membuka', error instanceof Error ? error.message : 'Coba lagi.');
+    } finally {
+      setViewingField(null);
+    }
+  }
 
   async function handleUpload(row: DocumentRow) {
     const result = await DocumentPicker.getDocumentAsync({
@@ -119,11 +150,13 @@ export default function EmployeeDataDocumentsScreen() {
                     {row.optional ? ' (opsional)' : ''}
                   </Text>
                   {url ? (
-                    <Pressable onPress={() => Linking.openURL(url)}>
+                    <Pressable
+                      onPress={() => handleView(row, url)}
+                      disabled={viewingField === row.field}>
                       <Text
                         numberOfLines={1}
                         className="text-xs text-primary underline">
-                        Lihat dokumen
+                        {viewingField === row.field ? 'Membuka...' : 'Lihat dokumen'}
                       </Text>
                     </Pressable>
                   ) : (

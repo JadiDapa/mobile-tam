@@ -77,6 +77,16 @@ function minCutiStartIso() {
   return addDaysIso(todayIso(), CUTI_MIN_ADVANCE_DAYS);
 }
 
+/** Izin wajib diajukan minimal 2 hari sebelum tanggal mulai (hari ini dan
+ * besok tidak bisa dipilih) — samakan dengan IZIN_MIN_ADVANCE_DAYS di
+ * dashboard/lib/leave.ts, server yang jadi sumber kebenaran validasinya,
+ * ini cuma UI guard di kalender. */
+const IZIN_MIN_ADVANCE_DAYS = 2;
+
+function minIzinStartIso() {
+  return addDaysIso(todayIso(), IZIN_MIN_ADVANCE_DAYS);
+}
+
 /** Tanggal 1 bulan depan — kecuali masih kurang dari 30 hari dari hari ini,
  * maka dibulatkan maju ke tanggal minimum yang boleh dipilih. */
 function defaultCutiStartIso() {
@@ -110,13 +120,15 @@ export function LeaveRequestFormBody({
   leaveBalanceLabel,
 }: LeaveRequestFormBodyProps) {
   const isCuti = type === 'Cuti';
+  const isIzin = type === 'Izin';
   const isSakit = type === 'Sakit';
   const cutiMinDate = isCuti ? minCutiStartIso() : undefined;
-  const [range, setRange] = useState<DateRange>(() =>
-    isCuti
-      ? { start: defaultCutiStartIso(), end: defaultCutiStartIso() }
-      : { start: todayIso(), end: todayIso() },
-  );
+  const izinMinDate = isIzin ? minIzinStartIso() : undefined;
+  const [range, setRange] = useState<DateRange>(() => {
+    if (isCuti) return { start: defaultCutiStartIso(), end: defaultCutiStartIso() };
+    if (isIzin) return { start: minIzinStartIso(), end: minIzinStartIso() };
+    return { start: todayIso(), end: todayIso() };
+  });
   const [isPickerOpen, setPickerOpen] = useState(false);
   const [detail, setDetail] = useState('');
   const [reasonError, setReasonError] = useState<string | null>(null);
@@ -231,6 +243,11 @@ export function LeaveRequestFormBody({
               Cuti wajib diajukan minimal 30 hari sebelum tanggal mulai.
             </Text>
           )}
+          {isIzin && (
+            <Text className="text-xs text-muted-foreground">
+              Izin wajib diajukan minimal 2 hari sebelum tanggal mulai.
+            </Text>
+          )}
         </View>
 
         {!isSakit && (
@@ -307,8 +324,8 @@ export function LeaveRequestFormBody({
           setRange(next);
           setPickerOpen(false);
         }}
-        minDate={cutiMinDate}
-        initialMonth={isCuti ? range.start : undefined}
+        minDate={cutiMinDate ?? izinMinDate}
+        initialMonth={isCuti || isIzin ? range.start : undefined}
       />
 
       {!isSakit && (

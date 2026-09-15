@@ -159,7 +159,7 @@ export default function ProfileScreen() {
 
       <View className="-mt-12 gap-1 px-5">
         <View className="items-center">
-          <Avatar name={user.name} imageUri={null} size={88} />
+          <Avatar name={user.name} imageUri={user.profileImageUrl} size={88} />
         </View>
 
         <View className="items-center gap-0.5 pt-1">
@@ -198,7 +198,7 @@ export default function ProfileScreen() {
           <SimpleRow
             icon="lock-closed-outline"
             label="Ubah Password"
-            onPress={() => {}}
+            onPress={() => router.push('/change-password')}
             showBorder={false}
           />
         </View>

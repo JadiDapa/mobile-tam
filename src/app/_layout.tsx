@@ -4,7 +4,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { useFonts } from "expo-font";
 import { DarkTheme, DefaultTheme, Stack, ThemeProvider } from "expo-router";
 import * as SplashScreen from "expo-splash-screen";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useColorScheme } from "react-native";
 
 import { AnimatedSplashOverlay } from "@/components/animated-icon";
@@ -12,6 +12,7 @@ import { NotificationButton } from "@/components/notification-button";
 import { UpdateModal } from "@/components/update-modal";
 import { useClearQueryCacheOnUserChange } from "@/hooks/use-clear-query-cache-on-user-change";
 import { useOtaUpdates } from "@/hooks/use-ota-updates";
+import { loadStoredThemePreference } from "@/hooks/use-theme-preference";
 
 import "../../global.css";
 
@@ -50,8 +51,13 @@ export default function RootLayout() {
     "Nexa-Bold": require("@/assets/fonts/montserrat/Montserrat-Bold.ttf"),
     "Nexa-Black": require("@/assets/fonts/montserrat/Montserrat-Black.ttf"),
   });
+  const [themeLoaded, setThemeLoaded] = useState(false);
 
-  if (!fontsLoaded) {
+  useEffect(() => {
+    loadStoredThemePreference().finally(() => setThemeLoaded(true));
+  }, []);
+
+  if (!fontsLoaded || !themeLoaded) {
     return null;
   }
 
@@ -77,6 +83,10 @@ export default function RootLayout() {
             <Stack.Screen name="(tabs)" />
             <Stack.Screen name="attendance-capture" />
             <Stack.Screen name="face-enrollment" />
+            <Stack.Screen
+              name="change-password"
+              options={{ headerShown: true, title: "Ubah Password" }}
+            />
             <Stack.Screen
               name="notifications"
               options={{ headerShown: true, title: "Notifikasi" }}

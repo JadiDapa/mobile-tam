@@ -108,6 +108,7 @@ export default function AttendanceCaptureScreen() {
   const [detail, setDetail] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [autoSubmitFailed, setAutoSubmitFailed] = useState(false);
+  const [hasSubmitted, setHasSubmitted] = useState(false);
   const [capturing, setCapturing] = useState(false);
 
   const office = settings.data?.officeLocation ?? null;
@@ -192,10 +193,11 @@ export default function AttendanceCaptureScreen() {
   function retakePhoto() {
     setPhoto(null);
     setAutoSubmitFailed(false);
+    setHasSubmitted(false);
   }
 
   const handleSubmit = useCallback(() => {
-    if (!photo || !coords || submitting) return;
+    if (!photo || !coords || submitting || hasSubmitted) return;
 
     setSubmitting(true);
 
@@ -220,6 +222,7 @@ export default function AttendanceCaptureScreen() {
           return;
         }
 
+        setHasSubmitted(true);
         Alert.alert(result.message, result.warning ?? undefined, [
           { text: "OK", onPress: () => router.back() },
         ]);
@@ -240,6 +243,7 @@ export default function AttendanceCaptureScreen() {
     isOutside,
     trimmedDetail,
     submitting,
+    hasSubmitted,
     submitMutation,
   ]);
 
@@ -252,7 +256,8 @@ export default function AttendanceCaptureScreen() {
       submitting ||
       !coords ||
       !isAccurate ||
-      autoSubmitFailed
+      autoSubmitFailed ||
+      hasSubmitted
     )
       return;
 
@@ -260,7 +265,15 @@ export default function AttendanceCaptureScreen() {
     // (memicu cascading render) — sama seperti dashboard/components/employee/AttendanceDialog.tsx.
     queueMicrotask(() => handleSubmit());
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [photo, coords, isAccurate, isOutside, submitting, autoSubmitFailed]);
+  }, [
+    photo,
+    coords,
+    isAccurate,
+    isOutside,
+    submitting,
+    autoSubmitFailed,
+    hasSubmitted,
+  ]);
 
   if (faceStatus.isPending || settings.isPending || !permission) {
     return (

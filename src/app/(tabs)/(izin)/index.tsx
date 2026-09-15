@@ -15,9 +15,11 @@ import {
   type LeaveRequestType,
 } from "@/components/leave-type-drawer";
 import { MonthSeparator } from "@/components/month-separator";
+import { ReviewedDivider } from "@/components/reviewed-divider";
 import { StatsRow } from "@/components/stats-row";
 import { LEAVE_TYPE_LABEL } from "@/constants/status";
-import { formatShortDate, monthKey, monthLabel } from "@/lib/date";
+import { formatShortDate } from "@/lib/date";
+import { groupByMonthWithReviewGap } from "@/lib/group-by-month";
 import { useLeaveRequestsQuery } from "@/lib/queries";
 
 type LeaveType = "Sakit" | "Izin" | "Cuti";
@@ -70,7 +72,15 @@ export default function IzinScreen() {
     value: requestsInRange.filter((request) => request.type === type).length,
   }));
 
-  let lastMonthKey: string | null = null;
+  const monthGroups = useMemo(
+    () =>
+      groupByMonthWithReviewGap(
+        visibleRequests,
+        (request) => request.startDate,
+        (request) => request.status === "PENDING",
+      ),
+    [visibleRequests],
+  );
   const onRefresh = () => leave.refetch();
 
   return (
@@ -123,20 +133,23 @@ export default function IzinScreen() {
                 Tidak ada pengajuan untuk filter ini.
               </Text>
             ) : (
-              visibleRequests.map((request) => {
-                const currentMonthKey = monthKey(request.startDate);
-                const showSeparator = currentMonthKey !== lastMonthKey;
-                lastMonthKey = currentMonthKey;
+              monthGroups.map((group) => (
+                <View key={group.key} className="gap-3">
+                  <MonthSeparator label={group.label} />
 
-                return (
-                  <View key={request.id} className="gap-3">
-                    {showSeparator && (
-                      <MonthSeparator label={monthLabel(request.startDate)} />
-                    )}
-                    <LeaveRequestCard request={request} />
-                  </View>
-                );
-              })
+                  {group.pending.map((request) => (
+                    <LeaveRequestCard key={request.id} request={request} />
+                  ))}
+
+                  {group.pending.length > 0 && group.reviewed.length > 0 && (
+                    <ReviewedDivider />
+                  )}
+
+                  {group.reviewed.map((request) => (
+                    <LeaveRequestCard key={request.id} request={request} />
+                  ))}
+                </View>
+              ))
             )}
           </View>
         </View>

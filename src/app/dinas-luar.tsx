@@ -1,9 +1,13 @@
 import { router } from 'expo-router';
+import { useMemo } from 'react';
 import { ActivityIndicator, Pressable, RefreshControl, ScrollView, View } from 'react-native';
 import { Text } from '@/components/ui/text';
 
 import { FieldAssignmentCard } from '@/components/field-assignment-card';
 import { Icon } from '@/components/icon';
+import { MonthSeparator } from '@/components/month-separator';
+import { ReviewedDivider } from '@/components/reviewed-divider';
+import { groupByMonthWithReviewGap } from '@/lib/group-by-month';
 import { useFieldAssignmentsQuery, useMeQuery } from '@/lib/queries';
 
 export default function DinasLuarScreen() {
@@ -11,7 +15,22 @@ export default function DinasLuarScreen() {
   const assignments = useFieldAssignmentsQuery();
 
   const isSupervisor = me.data?.role === 'SUPERVISOR';
-  const items = assignments.data?.items ?? [];
+  const items = useMemo(
+    () =>
+      [...(assignments.data?.items ?? [])].sort((a, b) =>
+        a.startDate < b.startDate ? 1 : -1,
+      ),
+    [assignments.data],
+  );
+  const monthGroups = useMemo(
+    () =>
+      groupByMonthWithReviewGap(
+        items,
+        (assignment) => assignment.startDate,
+        (assignment) => assignment.status === 'PENDING',
+      ),
+    [items],
+  );
   const onRefresh = () => assignments.refetch();
 
   return (
@@ -38,8 +57,22 @@ export default function DinasLuarScreen() {
                   : 'Belum ada penugasan dinas luar untukmu.'}
               </Text>
             ) : (
-              items.map((assignment) => (
-                <FieldAssignmentCard key={assignment.id} assignment={assignment} />
+              monthGroups.map((group) => (
+                <View key={group.key} className="gap-3">
+                  <MonthSeparator label={group.label} />
+
+                  {group.pending.map((assignment) => (
+                    <FieldAssignmentCard key={assignment.id} assignment={assignment} />
+                  ))}
+
+                  {group.pending.length > 0 && group.reviewed.length > 0 && (
+                    <ReviewedDivider />
+                  )}
+
+                  {group.reviewed.map((assignment) => (
+                    <FieldAssignmentCard key={assignment.id} assignment={assignment} />
+                  ))}
+                </View>
               ))
             )}
           </View>

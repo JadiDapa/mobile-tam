@@ -10,6 +10,7 @@ import { DateRangePicker, type DateRange } from '@/components/date-range-picker'
 import { FilterTabs } from '@/components/filter-tabs';
 import { Icon, type IoniconsIconName } from '@/components/icon';
 import { MonthSeparator } from '@/components/month-separator';
+import { StatsRow } from '@/components/stats-row';
 import { StatusBadge } from '@/components/status-badge';
 import { API_STATUS_LABEL } from '@/constants/status';
 import { formatShortDate, formatTime, monthKey, monthLabel } from '@/lib/date';
@@ -30,9 +31,6 @@ const TYPE_TO_LOG_TYPE: Record<Exclude<TypeTab, 'Semua'>, ApprovalLogEntry['type
   Lembur: 'OVERTIME',
   'Dinas Luar': 'FIELD_ASSIGNMENT',
 };
-
-const STATUS_TABS = ['Menunggu', 'Riwayat'] as const;
-type StatusTab = (typeof STATUS_TABS)[number];
 
 const HISTORY_TYPE_ICON: Record<ApprovalLogEntry['type'], IoniconsIconName> = {
   LEAVE: 'document-text-outline',
@@ -84,7 +82,6 @@ export default function ReviewScreen() {
     return canSeeFieldAssignment;
   });
 
-  const [statusTab, setStatusTab] = useState<StatusTab>('Menunggu');
   const [typeTab, setTypeTab] = useState<TypeTab>('Semua');
   const [range, setRange] = useState<DateRange>(() => {
     const today = new Date();
@@ -100,30 +97,22 @@ export default function ReviewScreen() {
   const showFieldAssignment =
     canSeeFieldAssignment && (typeTab === 'Semua' || typeTab === 'Dinas Luar');
 
-  const leave = usePendingLeaveApprovalsQuery(showLeave && statusTab === 'Menunggu');
-  const overtime = usePendingOvertimeApprovalsQuery(showOvertime && statusTab === 'Menunggu');
-  const fieldAssignment = usePendingFieldAssignmentApprovalsQuery(
-    showFieldAssignment && statusTab === 'Menunggu',
-  );
+  const leave = usePendingLeaveApprovalsQuery(showLeave);
+  const overtime = usePendingOvertimeApprovalsQuery(showOvertime);
+  const fieldAssignment = usePendingFieldAssignmentApprovalsQuery(showFieldAssignment);
 
-  const history = useReviewHistoryQuery(
-    typeTab === 'Semua' ? undefined : TYPE_TO_LOG_TYPE[typeTab],
-    statusTab === 'Riwayat',
-  );
+  const history = useReviewHistoryQuery(typeTab === 'Semua' ? undefined : TYPE_TO_LOG_TYPE[typeTab]);
 
-  const pendingItems = useMemo(() => {
-    type Item =
-      | { kind: 'leave'; date: string; key: string; node: ReactNode }
-      | { kind: 'overtime'; date: string; key: string; node: ReactNode }
-      | { kind: 'field-assignment'; date: string; key: string; node: ReactNode };
+  const items = useMemo(() => {
+    type Item = { date: string; status: (typeof API_STATUS_LABEL)[keyof typeof API_STATUS_LABEL]; key: string; node: ReactNode };
 
-    const items: Item[] = [];
+    const result: Item[] = [];
 
     if (showLeave) {
       for (const request of leave.data?.items ?? []) {
-        items.push({
-          kind: 'leave',
+        result.push({
           date: request.startDate,
+          status: 'Menunggu',
           key: `leave-${request.id}`,
           node: <LeaveApprovalCard request={request} />,
         });
@@ -132,9 +121,9 @@ export default function ReviewScreen() {
 
     if (showOvertime) {
       for (const request of overtime.data?.items ?? []) {
-        items.push({
-          kind: 'overtime',
-          date: request.startAt,
+        result.push({
+          date: request.startAt.slice(0, 10),
+          status: 'Menunggu',
           key: `overtime-${request.id}`,
           node: <OvertimeApprovalCard request={request} />,
         });
@@ -143,33 +132,56 @@ export default function ReviewScreen() {
 
     if (showFieldAssignment) {
       for (const assignment of fieldAssignment.data?.items ?? []) {
-        items.push({
-          kind: 'field-assignment',
+        result.push({
           date: assignment.startDate,
+          status: 'Menunggu',
           key: `field-assignment-${assignment.id}`,
           node: <FieldAssignmentApprovalCard assignment={assignment} />,
         });
       }
     }
 
-    return items.sort((a, b) => (a.date < b.date ? -1 : 1));
-  }, [showLeave, showOvertime, showFieldAssignment, leave.data, overtime.data, fieldAssignment.data]);
+    for (const entry of history.data?.items ?? []) {
+      result.push({
+        date: entry.reviewedAt.slice(0, 10),
+        status: API_STATUS_LABEL[entry.status],
+        key: `history-${entry.id}`,
+        node: <HistoryCard entry={entry} />,
+      });
+    }
 
-  const historyItems = useMemo(
-    () =>
-      [...(history.data?.items ?? [])]
-        .filter((entry) => {
-          const date = entry.reviewedAt.slice(0, 10);
-          return date >= range.start && date <= range.end;
-        })
-        .sort((a, b) => (a.reviewedAt < b.reviewedAt ? 1 : -1)),
-    [history.data, range],
-  );
+    return result;
+  }, [
+    showLeave,
+    showOvertime,
+    showFieldAssignment,
+    leave.data,
+    overtime.data,
+    fieldAssignment.data,
+    history.data,
+  ]);
 
-  const isPendingLoading =
+  const itemsInRange = items
+    .filter((item) => item.date >= range.start && item.date <= range.end)
+    .sort((a, b) => (a.date < b.date ? 1 : -1));
+
+  const stats = (['Menunggu', 'Disetujui', 'Ditolak'] as const).map((status) => ({
+    label: status,
+    value: itemsInRange.filter((item) => item.status === status).length,
+  }));
+
+  const isLoading =
+    me.isPending ||
     (showLeave && leave.isPending) ||
     (showOvertime && overtime.isPending) ||
-    (showFieldAssignment && fieldAssignment.isPending);
+    (showFieldAssignment && fieldAssignment.isPending) ||
+    history.isPending;
+
+  const isRefreshing =
+    (showLeave && leave.isRefetching) ||
+    (showOvertime && overtime.isRefetching) ||
+    (showFieldAssignment && fieldAssignment.isRefetching) ||
+    history.isRefetching;
 
   let lastMonthKey: string | null = null;
 
@@ -179,19 +191,12 @@ export default function ReviewScreen() {
         className="flex-1"
         refreshControl={
           <RefreshControl
-            refreshing={
-              statusTab === 'Menunggu'
-                ? leave.isRefetching || overtime.isRefetching || fieldAssignment.isRefetching
-                : history.isRefetching
-            }
+            refreshing={isRefreshing}
             onRefresh={() => {
-              if (statusTab === 'Menunggu') {
-                leave.refetch();
-                overtime.refetch();
-                fieldAssignment.refetch();
-              } else {
-                history.refetch();
-              }
+              leave.refetch();
+              overtime.refetch();
+              fieldAssignment.refetch();
+              history.refetch();
             }}
           />
         }>
@@ -200,27 +205,26 @@ export default function ReviewScreen() {
             Pengajuan izin, lembur, dan dinas luar yang jadi giliranmu.
           </Text>
 
-          <FilterTabs tabs={STATUS_TABS} active={statusTab} onChange={setStatusTab} />
+          <View className="flex-row gap-3">
+            <Pressable
+              onPress={() => setPickerOpen(true)}
+              className="flex-1 flex-row items-center gap-2 rounded-xl bg-muted px-4 py-3">
+              <Icon name="calendar-outline" size={18} tone="muted" />
+              <Text className="text-sm text-text">
+                {formatShortDate(range.start)} - {formatShortDate(range.end)}
+              </Text>
+            </Pressable>
+
+            <Pressable
+              onPress={() => setPickerOpen(true)}
+              className="items-center justify-center rounded-xl bg-primary px-4">
+              <Text className="text-sm font-medium text-primary-foreground">Filter</Text>
+            </Pressable>
+          </View>
+
           <FilterTabs tabs={visibleTypeTabs} active={typeTab} onChange={setTypeTab} />
 
-          {statusTab === 'Riwayat' && (
-            <View className="flex-row gap-3">
-              <Pressable
-                onPress={() => setPickerOpen(true)}
-                className="flex-1 flex-row items-center gap-2 rounded-xl bg-muted px-4 py-3">
-                <Icon name="calendar-outline" size={18} tone="muted" />
-                <Text className="text-sm text-text">
-                  {formatShortDate(range.start)} - {formatShortDate(range.end)}
-                </Text>
-              </Pressable>
-
-              <Pressable
-                onPress={() => setPickerOpen(true)}
-                className="items-center justify-center rounded-xl bg-primary px-4">
-                <Text className="text-sm font-medium text-primary-foreground">Filter</Text>
-              </Pressable>
-            </View>
-          )}
+          <StatsRow items={stats} />
 
           {canSeeAttendance && (
             <Pressable
@@ -237,57 +241,37 @@ export default function ReviewScreen() {
             </Pressable>
           )}
 
-          {statusTab === 'Menunggu' ? (
-            <View className="gap-3">
-              {me.isPending || isPendingLoading ? (
-                <ActivityIndicator className="py-10" />
-              ) : pendingItems.length === 0 ? (
-                <Text className="py-10 text-center text-sm text-muted-foreground">
-                  Tidak ada pengajuan yang menunggu untuk filter ini.
+          <View className="gap-3">
+            {isLoading ? (
+              <ActivityIndicator className="py-10" />
+            ) : history.isError ? (
+              <Pressable
+                onPress={() => history.refetch()}
+                className="flex-row items-center justify-center gap-2 py-10">
+                <Icon name="refresh-outline" size={16} tone="muted" />
+                <Text className="text-sm text-muted-foreground">
+                  Gagal memuat data, ketuk untuk coba lagi
                 </Text>
-              ) : (
-                pendingItems.map((item) => (
+              </Pressable>
+            ) : itemsInRange.length === 0 ? (
+              <Text className="py-10 text-center text-sm text-muted-foreground">
+                Tidak ada pengajuan untuk filter ini.
+              </Text>
+            ) : (
+              itemsInRange.map((item) => {
+                const currentMonthKey = monthKey(item.date);
+                const showSeparator = currentMonthKey !== lastMonthKey;
+                lastMonthKey = currentMonthKey;
+
+                return (
                   <View key={item.key} className="gap-3">
+                    {showSeparator && <MonthSeparator label={monthLabel(item.date)} />}
                     {item.node}
                   </View>
-                ))
-              )}
-            </View>
-          ) : (
-            <View className="gap-3">
-              {me.isPending || history.isPending ? (
-                <ActivityIndicator className="py-10" />
-              ) : history.isError ? (
-                <Pressable
-                  onPress={() => history.refetch()}
-                  className="flex-row items-center justify-center gap-2 py-10">
-                  <Icon name="refresh-outline" size={16} tone="muted" />
-                  <Text className="text-sm text-muted-foreground">
-                    Gagal memuat riwayat, ketuk untuk coba lagi
-                  </Text>
-                </Pressable>
-              ) : historyItems.length === 0 ? (
-                <Text className="py-10 text-center text-sm text-muted-foreground">
-                  Belum ada riwayat keputusan untuk filter ini.
-                </Text>
-              ) : (
-                historyItems.map((entry) => {
-                  const currentMonthKey = monthKey(entry.reviewedAt.slice(0, 10));
-                  const showSeparator = currentMonthKey !== lastMonthKey;
-                  lastMonthKey = currentMonthKey;
-
-                  return (
-                    <View key={entry.id} className="gap-3">
-                      {showSeparator && (
-                        <MonthSeparator label={monthLabel(entry.reviewedAt.slice(0, 10))} />
-                      )}
-                      <HistoryCard entry={entry} />
-                    </View>
-                  );
-                })
-              )}
-            </View>
-          )}
+                );
+              })
+            )}
+          </View>
         </View>
       </ScrollView>
 

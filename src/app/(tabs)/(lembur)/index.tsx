@@ -18,6 +18,7 @@ import { Icon } from "@/components/icon";
 import { MonthSeparator } from "@/components/month-separator";
 import { OvertimeEndDrawer } from "@/components/overtime-end-drawer";
 import { OvertimeStartDrawer } from "@/components/overtime-request-drawer";
+import { ReviewedDivider } from "@/components/reviewed-divider";
 import { StatsRow } from "@/components/stats-row";
 import {
   OvertimeRequestCard,
@@ -28,9 +29,8 @@ import {
   formatDuration,
   formatShortDate,
   formatTime,
-  monthKey,
-  monthLabel,
 } from "@/lib/date";
+import { groupByMonthWithReviewGap } from "@/lib/group-by-month";
 import {
   useEndOvertimeMutation,
   useOvertimeHistoryQuery,
@@ -133,7 +133,15 @@ export default function LemburScreen() {
     }),
   );
 
-  let lastMonthKey: string | null = null;
+  const monthGroups = useMemo(
+    () =>
+      groupByMonthWithReviewGap(
+        visibleRequests,
+        (request) => request.date,
+        (request) => request.status === "Menunggu",
+      ),
+    [visibleRequests],
+  );
 
   return (
     <View className="flex-1 bg-background">
@@ -195,20 +203,23 @@ export default function LemburScreen() {
                 Tidak ada pengajuan lembur untuk filter ini.
               </Text>
             ) : (
-              visibleRequests.map((request) => {
-                const currentMonthKey = monthKey(request.date);
-                const showSeparator = currentMonthKey !== lastMonthKey;
-                lastMonthKey = currentMonthKey;
+              monthGroups.map((group) => (
+                <View key={group.key} className="gap-3">
+                  <MonthSeparator label={group.label} />
 
-                return (
-                  <View key={request.id} className="gap-3">
-                    {showSeparator && (
-                      <MonthSeparator label={monthLabel(request.date)} />
-                    )}
-                    <OvertimeRequestCard request={request} />
-                  </View>
-                );
-              })
+                  {group.pending.map((request) => (
+                    <OvertimeRequestCard key={request.id} request={request} />
+                  ))}
+
+                  {group.pending.length > 0 && group.reviewed.length > 0 && (
+                    <ReviewedDivider />
+                  )}
+
+                  {group.reviewed.map((request) => (
+                    <OvertimeRequestCard key={request.id} request={request} />
+                  ))}
+                </View>
+              ))
             )}
           </View>
         </View>

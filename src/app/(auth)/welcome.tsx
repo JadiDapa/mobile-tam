@@ -59,9 +59,11 @@ export default function WelcomeScreen() {
             </Text>
           </Pressable>
 
-          <Text className="text-center text-xs text-muted-foreground">
-            Belum punya akun? Hubungi admin untuk dibuatkan.
-          </Text>
+          <Pressable onPress={() => router.push("/request-account")} hitSlop={8}>
+            <Text className="text-center text-xs text-muted-foreground">
+              Belum punya akun? <Text className="font-medium text-primary">Ajukan pembuatan akun</Text>
+            </Text>
+          </Pressable>
         </View>
       </View>
     </View>

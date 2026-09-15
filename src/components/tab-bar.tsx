@@ -4,7 +4,8 @@ import { Text } from "@/components/ui/text";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import { Icon, type IoniconsIconName } from "@/components/icon";
-import { useMeQuery } from "@/lib/queries";
+import { NotificationBadge } from "@/components/notification-badge";
+import { useMeQuery, usePendingReviewCount } from "@/lib/queries";
 
 const ROUTE_META: Record<
   string,
@@ -39,6 +40,7 @@ export function TabBar({ state, navigation }: BottomTabBarProps) {
   const insets = useSafeAreaInsets();
   const me = useMeQuery();
   const role = me.data?.role;
+  const pendingReviewCount = usePendingReviewCount();
 
   return (
     <View
@@ -83,6 +85,9 @@ export function TabBar({ state, navigation }: BottomTabBarProps) {
                 size={22}
                 tone={focused ? "primary" : "muted"}
               />
+              {route.name === "(approval)" && (
+                <NotificationBadge count={pendingReviewCount} />
+              )}
             </View>
             <Text
               numberOfLines={1}

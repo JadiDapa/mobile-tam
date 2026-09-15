@@ -571,6 +571,30 @@ export function useReviewHistoryQuery(
   });
 }
 
+/**
+ * Total pengajuan izin + lembur + dinas luar yang menunggu giliran reviewer yang
+ * login — dipakai buat badge lonceng notifikasi & tab Review. Role gating sama
+ * persis dengan `(tabs)/(approval)/index.tsx`.
+ */
+export function usePendingReviewCount() {
+  const me = useMeQuery();
+  const role = me.data?.role;
+
+  const canSeeLeave = role === 'ADMIN' || role === 'SUPERVISOR' || role === 'MANAGER';
+  const canSeeOvertime = role === 'ADMIN' || role === 'SUPERVISOR';
+  const canSeeFieldAssignment = role === 'ADMIN';
+
+  const leave = usePendingLeaveApprovalsQuery(canSeeLeave);
+  const overtime = usePendingOvertimeApprovalsQuery(canSeeOvertime);
+  const fieldAssignment = usePendingFieldAssignmentApprovalsQuery(canSeeFieldAssignment);
+
+  return (
+    (canSeeLeave ? leave.data?.items.length ?? 0 : 0) +
+    (canSeeOvertime ? overtime.data?.items.length ?? 0 : 0) +
+    (canSeeFieldAssignment ? fieldAssignment.data?.items.length ?? 0 : 0)
+  );
+}
+
 /** Daftar karyawan aktif — supervisor saja, untuk pemilihan saat membuat penugasan. */
 export function useEmployeesQuery() {
   const api = useApi();

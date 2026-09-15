@@ -101,9 +101,11 @@ export default function LoginScreen() {
           </Pressable>
         </View>
 
-        <Text className="text-center text-sm text-muted-foreground">
-          Belum punya akun? Hubungi admin untuk dibuatkan.
-        </Text>
+        <Pressable onPress={() => router.push('/request-account')} hitSlop={8}>
+          <Text className="text-center text-sm text-muted-foreground">
+            Belum punya akun? <Text className="font-medium text-primary">Ajukan pembuatan akun</Text>
+          </Text>
+        </Pressable>
       </ScrollView>
     </KeyboardAvoidingView>
   );

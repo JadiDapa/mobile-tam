@@ -21,6 +21,7 @@ import {
 } from "@/components/histori/attendance-card";
 import { Icon } from "@/components/icon";
 import { MissedCheckoutModal } from "@/components/missed-checkout-modal";
+import { NotificationBadge } from "@/components/notification-badge";
 import { OvertimeEndDrawer } from "@/components/overtime-end-drawer";
 import { OvertimeStartDrawer } from "@/components/overtime-request-drawer";
 import { Card } from "@/components/ui/card";
@@ -42,6 +43,7 @@ import {
   useLeaveRequestsQuery,
   useMeQuery,
   useOvertimeHistoryQuery,
+  usePendingReviewCount,
   useSettingsQuery,
   useStartOvertimeMutation,
 } from "@/lib/queries";
@@ -83,6 +85,7 @@ export default function BerandaScreen() {
   const [isEndDrawerOpen, setEndDrawerOpen] = useState(false);
 
   const me = useMeQuery();
+  const pendingReviewCount = usePendingReviewCount();
   const month = useAttendanceHistoryQuery(); // default: bulan berjalan
   const leave = useLeaveRequestsQuery();
   const overtime = useOvertimeHistoryQuery();
@@ -291,6 +294,7 @@ export default function BerandaScreen() {
               className="h-11 w-11 items-center justify-center rounded-full bg-primary-foreground/15"
             >
               <Icon name="notifications-outline" size={20} color="#ffffff" />
+              <NotificationBadge count={pendingReviewCount} />
             </Pressable>
           </View>
         </View>

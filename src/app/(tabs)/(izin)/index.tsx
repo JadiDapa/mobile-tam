@@ -52,6 +52,10 @@ export default function IzinScreen() {
     () =>
       (leave.data?.items ?? [])
         .filter((request) => {
+          // Pengajuan yang masih menunggu selalu tampil, tidak terpotong filter
+          // tanggal — biar tidak "hilang" cuma karena di luar rentang aktif.
+          if (request.status === "PENDING") return true;
+
           const startDate = request.startDate.slice(0, 10);
           const endDate = request.endDate.slice(0, 10);
           return startDate <= range.end && endDate >= range.start;

@@ -117,7 +117,13 @@ export default function LemburScreen() {
   );
 
   const requestsInRange = requests
-    .filter((request) => request.date >= range.start && request.date <= range.end)
+    .filter(
+      (request) =>
+        // Pengajuan yang masih menunggu selalu tampil, tidak terpotong filter
+        // tanggal — biar tidak "hilang" cuma karena di luar rentang aktif.
+        request.status === "Menunggu" ||
+        (request.date >= range.start && request.date <= range.end),
+    )
     .sort((a, b) => (a.date < b.date ? 1 : -1));
 
   const visibleRequests =

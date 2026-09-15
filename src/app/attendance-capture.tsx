@@ -404,31 +404,11 @@ export default function AttendanceCaptureScreen() {
           className="absolute inset-0 items-center justify-center"
           style={{ paddingBottom: 120 }}
         >
-          <View className="relative aspect-square w-[83%]">
-            <Image
-              source={require("@/assets/images/outline.png")}
-              className="absolute left-0 top-0 size-14"
-              resizeMode="contain"
-            />
-            <Image
-              source={require("@/assets/images/outline.png")}
-              className="absolute right-0 top-0 size-14"
-              style={{ transform: [{ rotate: "90deg" }] }}
-              resizeMode="contain"
-            />
-            <Image
-              source={require("@/assets/images/outline.png")}
-              className="absolute bottom-0 right-0 size-14"
-              style={{ transform: [{ rotate: "180deg" }] }}
-              resizeMode="contain"
-            />
-            <Image
-              source={require("@/assets/images/outline.png")}
-              className="absolute bottom-0 left-0 size-14"
-              style={{ transform: [{ rotate: "270deg" }] }}
-              resizeMode="contain"
-            />
-          </View>
+          <Image
+            source={require("@/assets/images/outline.png")}
+            className="aspect-square w-[80%]"
+            resizeMode="contain"
+          />
         </View>
       )}
 

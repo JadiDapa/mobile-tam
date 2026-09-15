@@ -17,6 +17,7 @@ import { formatShortDate, formatTime, monthKey, monthLabel } from '@/lib/date';
 import {
   type ApprovalLogEntry,
   useMeQuery,
+  usePendingAttendanceApprovalsQuery,
   usePendingFieldAssignmentApprovalsQuery,
   usePendingLeaveApprovalsQuery,
   usePendingOvertimeApprovalsQuery,
@@ -106,6 +107,10 @@ export default function ReviewScreen() {
 
   const history = useReviewHistoryQuery(typeTab === 'Semua' ? undefined : TYPE_TO_LOG_TYPE[typeTab]);
 
+  // Prefetch di sini biar layar Verifikasi Absensi sudah punya data saat dibuka,
+  // bukan mulai fetch dari nol pas navigasi (terasa lambat).
+  usePendingAttendanceApprovalsQuery(canSeeAttendance);
+
   const items = useMemo(() => {
     type Item = { date: string; status: (typeof API_STATUS_LABEL)[keyof typeof API_STATUS_LABEL]; key: string; node: ReactNode };
 
@@ -165,7 +170,14 @@ export default function ReviewScreen() {
   ]);
 
   const itemsInRange = items
-    .filter((item) => item.date >= range.start && item.date <= range.end)
+    .filter(
+      (item) =>
+        // Pengajuan yang masih menunggu direview selalu tampil, tidak
+        // terpotong filter tanggal — biar tidak "hilang" cuma karena di luar
+        // rentang aktif.
+        item.status === "Menunggu" ||
+        (item.date >= range.start && item.date <= range.end),
+    )
     .sort((a, b) => (a.date < b.date ? 1 : -1));
 
   const stats = (['Menunggu', 'Disetujui', 'Ditolak'] as const).map((status) => ({

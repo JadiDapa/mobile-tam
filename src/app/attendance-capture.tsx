@@ -17,7 +17,7 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import { FormInput } from "@/components/form-input";
 import { Icon } from "@/components/icon";
-import { formatLateDuration, lateMinutesFor } from "@/lib/date";
+import { formatLateDuration } from "@/lib/date";
 import { formatDistance, haversineDistance } from "@/lib/geo";
 import {
   useFaceStatusQuery,
@@ -244,15 +244,7 @@ export default function AttendanceCaptureScreen() {
 
         setHasSubmitted(true);
 
-        const now = new Date();
-        const lateMinutes =
-          type === "CHECK_IN"
-            ? lateMinutesFor(
-                now.toISOString(),
-                now.toISOString().slice(0, 10),
-                settings.data?.workDays ?? [],
-              )
-            : 0;
+        const lateMinutes = result.lateMinutes ?? 0;
         const lateLine =
           lateMinutes > 0
             ? `Terlambat ${formatLateDuration(lateMinutes)}.`

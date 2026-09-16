@@ -64,26 +64,6 @@ export function formatDuration(startIso: string | null, endIso: string | null) {
   return hours > 0 ? `${hours}j ${minutes % 60}m` : `${minutes}m`;
 }
 
-/** Minutes between actual check-in and the day's scheduled check-in time (0 if not late or schedule unknown). */
-export function lateMinutesFor(
-  checkInIso: string,
-  workDate: string,
-  workDays: { dayOfWeek: number; checkInTime: string }[],
-) {
-  const dayOfWeek = new Date(`${workDate.slice(0, 10)}T00:00:00`).getDay();
-  const schedule = workDays.find((d) => d.dayOfWeek === dayOfWeek);
-  if (!schedule) return 0;
-
-  const [schedHour, schedMinute] = schedule.checkInTime.split(':').map(Number);
-  if (Number.isNaN(schedHour) || Number.isNaN(schedMinute)) return 0;
-
-  const checkIn = new Date(checkInIso);
-  const actualMinutes = checkIn.getHours() * 60 + checkIn.getMinutes();
-  const scheduledMinutes = schedHour * 60 + schedMinute;
-
-  return Math.max(0, actualMinutes - scheduledMinutes);
-}
-
 /** "1j 30m" / "45m" — how late, formatted for display. */
 export function formatLateDuration(minutes: number) {
   const hours = Math.floor(minutes / 60);

@@ -21,6 +21,8 @@ export type AttendanceRecord = {
   type: 'CHECK_IN' | 'CHECK_OUT';
   timestamp: string;
   isLate: boolean;
+  /** Menit terlambat dari jam masuk terjadwal, tanpa toleransi — tetap > 0 walau `isLate` false. */
+  lateMinutes: number;
   isWithinRadius: boolean | null;
   isManual: boolean;
   workMode: string;
@@ -274,10 +276,10 @@ export function useSubmitAttendanceMutation() {
 
   return useMutation({
     mutationFn: (formData: FormData) =>
-      api<{ ok: true; message: string; warning?: string } | { ok: false; error: string }>(
-        '/api/attendance',
-        { method: 'POST', body: formData },
-      ),
+      api<
+        | { ok: true; message: string; warning?: string; lateMinutes?: number }
+        | { ok: false; error: string }
+      >('/api/attendance', { method: 'POST', body: formData }),
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ['attendance'] }),
   });
 }

@@ -35,7 +35,6 @@ import {
   formatLateDuration,
   formatLongIndonesianDate,
   formatTime,
-  lateMinutesFor,
 } from "@/lib/date";
 import {
   useAttendanceHistoryQuery,
@@ -108,12 +107,10 @@ export default function BerandaScreen() {
   const hasCheckedIn = todayCheckIn !== null;
   const hasCheckedOut = todayCheckOut !== null;
 
-  const workDays = settings.data?.workDays ?? [];
   const isTodayLate = todayRecord?.checkIn?.isLate ?? false;
+  const todayLateMinutes = todayRecord?.checkIn?.lateMinutes ?? 0;
   const todayLateLabel =
-    isTodayLate && todayCheckIn
-      ? formatLateDuration(lateMinutesFor(todayCheckIn, today, workDays))
-      : null;
+    todayLateMinutes > 0 ? formatLateDuration(todayLateMinutes) : null;
 
   const todaysOvertime = useMemo(
     () =>
@@ -205,14 +202,8 @@ export default function BerandaScreen() {
           status: "Hadir",
           isLate: d.checkIn?.isLate ?? false,
           lateBy:
-            d.checkIn?.isLate && d.checkIn
-              ? formatLateDuration(
-                  lateMinutesFor(
-                    d.checkIn.timestamp,
-                    d.workDate.slice(0, 10),
-                    workDays,
-                  ),
-                )
+            d.checkIn && d.checkIn.lateMinutes > 0
+              ? formatLateDuration(d.checkIn.lateMinutes)
               : null,
           checkIn: d.checkIn ? formatTime(d.checkIn.timestamp) : null,
           checkOut: d.checkOut ? formatTime(d.checkOut.timestamp) : null,
@@ -221,7 +212,7 @@ export default function BerandaScreen() {
               ? formatDuration(d.checkIn.timestamp, d.checkOut.timestamp)
               : "--:--",
         })),
-    [month.data, workDays],
+    [month.data],
   );
 
   const leaveRequestCards = useMemo(

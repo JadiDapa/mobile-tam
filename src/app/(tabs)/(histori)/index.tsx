@@ -26,13 +26,8 @@ import {
   formatLateDuration,
   formatShortDate,
   formatTime,
-  lateMinutesFor,
 } from "@/lib/date";
-import {
-  useAttendanceHistoryQuery,
-  useLeaveRequestsQuery,
-  useSettingsQuery,
-} from "@/lib/queries";
+import { useAttendanceHistoryQuery, useLeaveRequestsQuery } from "@/lib/queries";
 
 const TABS: ("Semua" | DayStatus)[] = [
   "Semua",
@@ -69,9 +64,6 @@ export default function HistoriScreen() {
     to: range.end,
   });
   const leave = useLeaveRequestsQuery();
-  const settings = useSettingsQuery();
-
-  const workDays = settings.data?.workDays ?? [];
 
   const records = useMemo<DayRecord[]>(() => {
     if (!attendance.data) return [];
@@ -95,11 +87,10 @@ export default function HistoriScreen() {
                 WORK_MODE_LABEL[day.checkIn.workMode] ?? day.checkIn.workMode,
               status: "Hadir",
               isLate: day.checkIn.isLate,
-              lateBy: day.checkIn.isLate
-                ? formatLateDuration(
-                    lateMinutesFor(day.checkIn.timestamp, date, workDays),
-                  )
-                : null,
+              lateBy:
+                day.checkIn.lateMinutes > 0
+                  ? formatLateDuration(day.checkIn.lateMinutes)
+                  : null,
               checkIn: formatTime(day.checkIn.timestamp),
               checkOut: day.checkOut
                 ? formatTime(day.checkOut.timestamp)
@@ -139,7 +130,7 @@ export default function HistoriScreen() {
         return [];
       },
     );
-  }, [attendance.data, leave.data, range, workDays]);
+  }, [attendance.data, leave.data, range]);
 
   const visibleRecords = (
     activeTab === "Semua"

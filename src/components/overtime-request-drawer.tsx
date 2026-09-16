@@ -1,3 +1,4 @@
+import { DateTimePicker } from '@expo/ui/community/datetime-picker';
 import { useEffect, useState } from 'react';
 import { Modal, Pressable, View } from 'react-native';
 import { Text } from '@/components/ui/text';
@@ -16,8 +17,11 @@ type OvertimeStartDrawerProps = {
   onStart: (startTime: string, reason: string) => void;
 };
 
+/** Pilihan mulai lembur: sekarang (jam berjalan), atau pilih jam mulainya sendiri. */
 export function OvertimeStartDrawer({ visible, onClose, onStart }: OvertimeStartDrawerProps) {
   const [now, setNow] = useState<Date>(() => new Date());
+  const [useCustomTime, setUseCustomTime] = useState(false);
+  const [customTime, setCustomTime] = useState<Date>(() => new Date());
   const [reason, setReason] = useState('');
   const [reasonError, setReasonError] = useState<string | null>(null);
 
@@ -28,9 +32,12 @@ export function OvertimeStartDrawer({ visible, onClose, onStart }: OvertimeStart
     return () => clearInterval(interval);
   }, [visible]);
 
-  const isTooEarly = now.getHours() < MIN_HOUR;
+  const startTime = useCustomTime ? customTime : now;
+  const isTooEarly = startTime.getHours() < MIN_HOUR;
 
   function resetForm() {
+    setUseCustomTime(false);
+    setCustomTime(new Date());
     setReason('');
     setReasonError(null);
   }
@@ -49,7 +56,7 @@ export function OvertimeStartDrawer({ visible, onClose, onStart }: OvertimeStart
     }
     setReasonError(null);
 
-    onStart(formatTime(new Date()), reason.trim());
+    onStart(formatTime(startTime), reason.trim());
     resetForm();
   }
 
@@ -63,17 +70,34 @@ export function OvertimeStartDrawer({ visible, onClose, onStart }: OvertimeStart
             Mulai Lembur
           </Text>
           <Text className="text-center text-sm text-muted-foreground">
-            Lembur hanya bisa dimulai pukul 18:00 atau lebih larut.
+            Jam mulai lembur harus pukul 18:00 atau lebih larut.
           </Text>
 
           <View className="gap-1.5">
             <Text className="text-sm font-medium text-text">Waktu Mulai</Text>
-            <Text className="text-2xl font-bold text-text">{formatTime(now)}</Text>
+
+            {useCustomTime ? (
+              <DateTimePicker
+                value={customTime}
+                mode="time"
+                presentation="inline"
+                onValueChange={(_event, date) => setCustomTime(date)}
+              />
+            ) : (
+              <Text className="text-2xl font-bold text-text">{formatTime(now)}</Text>
+            )}
+
             {isTooEarly && (
               <Text className="text-xs text-red-600 dark:text-red-400">
-                Belum bisa mulai lembur — tunggu sampai pukul 18:00
+                Jam mulai harus pukul 18:00 atau lebih larut
               </Text>
             )}
+
+            <Pressable onPress={() => setUseCustomTime((prev) => !prev)} className="py-1">
+              <Text className="text-sm text-primary">
+                {useCustomTime ? 'Pakai jam sekarang' : 'Pilih jam mulai sendiri'}
+              </Text>
+            </Pressable>
           </View>
 
           <View className="gap-1.5">

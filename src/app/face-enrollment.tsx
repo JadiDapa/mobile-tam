@@ -2,7 +2,7 @@ import { CameraView, useCameraPermissions } from "expo-camera";
 import { File } from "expo-file-system";
 import { router } from "expo-router";
 import { useRef, useState } from "react";
-import { ActivityIndicator, Alert, Pressable, View } from "react-native";
+import { ActivityIndicator, Alert, Image, Pressable, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { StatusBar } from "expo-status-bar";
 
@@ -137,10 +137,14 @@ export default function FaceEnrollmentScreen() {
       {/* Panduan wajah */}
       <View
         pointerEvents="none"
-        className="absolute inset-0 top-40 items-center justify-center"
-        style={{ paddingBottom: 180 }}
+        className="absolute inset-0 items-center justify-center"
+        style={{ paddingBottom: 120 }}
       >
-        <View className="h-[65%] aspect-square rounded-[40px] border-2 border-white/80" />
+        <Image
+          source={require("@/assets/images/outline.png")}
+          className="aspect-square w-88 h-88"
+          resizeMode="contain"
+        />
       </View>
 
       {/* Bar atas */}

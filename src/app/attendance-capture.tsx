@@ -1,3 +1,4 @@
+import { Text } from "@/components/ui/text";
 import { CameraView, useCameraPermissions } from "expo-camera";
 import { File } from "expo-file-system";
 import * as Location from "expo-location";
@@ -13,11 +14,6 @@ import {
   View,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { Text } from "@/components/ui/text";
-
-/** Style banner danger dipakai berulang di layar ini (overlay di atas kamera/foto). */
-const dangerOverlayClass =
-  "gap-2 rounded-2xl border border-red-400/60 bg-red-500/90 p-3 shadow-lg shadow-black/30";
 
 import { FormInput } from "@/components/form-input";
 import { Icon } from "@/components/icon";
@@ -29,6 +25,10 @@ import {
   useSubmitAttendanceMutation,
 } from "@/lib/queries";
 import { MIN_DETAIL_LENGTH } from "@/lib/work-mode";
+
+/** Style banner danger dipakai berulang di layar ini (overlay di atas kamera/foto). */
+const dangerOverlayClass =
+  "gap-2 rounded-2xl border border-red-400/60 bg-red-500/90 p-3 shadow-lg shadow-black/30";
 
 type Coords = { latitude: number; longitude: number; accuracy: number };
 
@@ -406,7 +406,7 @@ export default function AttendanceCaptureScreen() {
         >
           <Image
             source={require("@/assets/images/outline.png")}
-            className="aspect-square w-[80%]"
+            className="aspect-square w-88 h-88"
             resizeMode="contain"
           />
         </View>
@@ -493,9 +493,7 @@ export default function AttendanceCaptureScreen() {
             {locating && !coords ? (
               <View className="flex-row items-center gap-2">
                 <ActivityIndicator size="small" color="#ffffff" />
-                <Text className="text-xs text-white/80">
-                  Membaca lokasi...
-                </Text>
+                <Text className="text-xs text-white/80">Membaca lokasi...</Text>
               </View>
             ) : coords ? (
               <>

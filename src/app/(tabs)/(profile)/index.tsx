@@ -1,4 +1,5 @@
 import { useClerk } from '@clerk/expo';
+import * as Application from 'expo-application';
 import { router } from 'expo-router';
 import { useState } from 'react';
 import { ActivityIndicator, Pressable, RefreshControl, ScrollView, Switch, View } from 'react-native';
@@ -276,7 +277,7 @@ export default function ProfileScreen() {
             <SimpleRow
               icon="information-circle-outline"
               label="Tentang Aplikasi"
-              subtitle="v1.0.0"
+              subtitle={`v${Application.nativeApplicationVersion}`}
               onPress={() => {}}
               showBorder={false}
             />

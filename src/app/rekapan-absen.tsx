@@ -96,13 +96,12 @@ export default function RekapanAbsenScreen() {
   const monthly = useAdminMonthlyRecapQuery(month);
 
   const isDaily = mode === 'Harian';
-  const activeQuery = isDaily ? daily : monthly;
 
   const monthLabelText = useMemo(() => monthLabel(`${month}-01T00:00:00`), [month]);
 
   return (
     <View className="flex-1 bg-background">
-      <View className="gap-4 px-5 pt-safe-offset-5">
+      <View className="gap-4 px-5 pt-4">
         <View className="flex-row gap-1 rounded-2xl bg-muted p-1">
           {MODES.map((item) => (
             <Pressable
@@ -135,8 +134,12 @@ export default function RekapanAbsenScreen() {
           contentContainerClassName="gap-3 px-5 pb-5 pt-4"
           refreshControl={<RefreshControl refreshing={daily.isRefetching} onRefresh={() => daily.refetch()} />}
           ListEmptyComponent={
-            activeQuery.isPending ? (
+            daily.isPending ? (
               <ActivityIndicator className="py-10" />
+            ) : daily.isError ? (
+              <Text className="py-10 text-center text-sm text-destructive">
+                {daily.error instanceof Error ? daily.error.message : 'Gagal memuat data.'}
+              </Text>
             ) : (
               <Text className="py-10 text-center text-sm text-muted-foreground">
                 Belum ada data absensi untuk tanggal ini.
@@ -152,8 +155,12 @@ export default function RekapanAbsenScreen() {
           contentContainerClassName="gap-3 px-5 pb-5 pt-4"
           refreshControl={<RefreshControl refreshing={monthly.isRefetching} onRefresh={() => monthly.refetch()} />}
           ListEmptyComponent={
-            activeQuery.isPending ? (
+            monthly.isPending ? (
               <ActivityIndicator className="py-10" />
+            ) : monthly.isError ? (
+              <Text className="py-10 text-center text-sm text-destructive">
+                {monthly.error instanceof Error ? monthly.error.message : 'Gagal memuat data.'}
+              </Text>
             ) : (
               <Text className="py-10 text-center text-sm text-muted-foreground">
                 Belum ada data absensi untuk bulan ini.

@@ -265,13 +265,6 @@ export default function ProfileScreen() {
         <View className="gap-2">
           <Text className="text-sm font-bold text-text">Lainnya</Text>
           <View className="rounded-2xl bg-muted px-3">
-            <SimpleRow
-              icon="globe-outline"
-              label="Bahasa"
-              subtitle="Indonesia"
-              onPress={() => {}}
-              showBorder
-            />
             <SimpleRow icon="document-outline" label="Kebijakan Privasi" onPress={() => {}} showBorder />
             <SimpleRow icon="clipboard-outline" label="Syarat & Ketentuan" onPress={() => {}} showBorder />
             <SimpleRow

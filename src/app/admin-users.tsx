@@ -47,7 +47,7 @@ export default function AdminUsersScreen() {
 
   return (
     <View className="flex-1 bg-background">
-      <View className="gap-4 px-5 pt-safe-offset-5">
+      <View className="gap-4 px-5 pt-4">
         <FilterTabs tabs={ROLE_TABS} active={roleTab} onChange={setRoleTab} />
       </View>
 
@@ -60,6 +60,10 @@ export default function AdminUsersScreen() {
         ListEmptyComponent={
           users.isPending ? (
             <ActivityIndicator className="py-10" />
+          ) : users.isError ? (
+            <Text className="py-10 text-center text-sm text-destructive">
+              {users.error instanceof Error ? users.error.message : 'Gagal memuat data.'}
+            </Text>
           ) : (
             <Text className="py-10 text-center text-sm text-muted-foreground">
               Tidak ada pengguna untuk filter ini.

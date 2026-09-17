@@ -215,7 +215,7 @@ export default function ReviewScreen() {
             }}
           />
         }>
-        <View className="gap-4 px-5 pb-5 pt-safe-offset-5">
+        <View className="gap-4 px-5 pb-5 pt-4">
           <Text className="text-sm text-muted-foreground">
             Pengajuan izin, lembur, dan dinas luar yang jadi giliranmu.
           </Text>

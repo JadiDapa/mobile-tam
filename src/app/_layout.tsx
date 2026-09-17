@@ -8,6 +8,7 @@ import { useEffect, useState } from "react";
 import { useColorScheme } from "react-native";
 
 import { AnimatedSplashOverlay } from "@/components/animated-icon";
+import { ArrowButton } from "@/components/arrow-button";
 import { NotificationButton } from "@/components/notification-button";
 import { UpdateModal } from "@/components/update-modal";
 import { useClearQueryCacheOnUserChange } from "@/hooks/use-clear-query-cache-on-user-change";
@@ -61,6 +62,12 @@ export default function RootLayout() {
     return null;
   }
 
+  // Warna header solid yang sama dengan tab histori/izin/dll (Stack terpisah
+  // yang tidak pernah di-override transparan) — dipakai sebagai default semua
+  // layar di root Stack ini, bukan cuma header tembus untuk layar hero banner.
+  const headerCardColor =
+    colorScheme === "dark" ? DarkTheme.colors.card : DefaultTheme.colors.card;
+
   return (
     <ClerkProvider publishableKey={publishableKey!} tokenCache={tokenCache}>
       <QueryClientProvider client={queryClient}>
@@ -74,8 +81,11 @@ export default function RootLayout() {
             screenOptions={{
               headerShown: false,
               headerTitleStyle: { fontFamily: "Nexa-Bold" },
-              headerStyle: { backgroundColor: "transparent" },
+              headerStyle: { backgroundColor: headerCardColor },
               headerShadowVisible: false,
+              headerTitleAlign: "center",
+              headerLeft: () => <ArrowButton />,
+              headerRight: () => <NotificationButton />,
             }}
           >
             <Stack.Screen name="index" />
@@ -109,11 +119,7 @@ export default function RootLayout() {
             />
             <Stack.Screen
               name="dinas-luar"
-              options={{
-                headerShown: true,
-                title: "Dinas Luar",
-                headerRight: () => <NotificationButton />,
-              }}
+              options={{ headerShown: true, title: "Dinas Luar" }}
             />
             <Stack.Screen
               name="approval-leave"

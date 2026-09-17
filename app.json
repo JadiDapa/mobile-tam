@@ -50,6 +50,12 @@
         }
       ],
       [
+        "expo-image-picker",
+        {
+          "photosPermission": "Aplikasi memerlukan akses galeri untuk memilih foto profil."
+        }
+      ],
+      [
         "expo-location",
         {
           "locationWhenInUsePermission": "Aplikasi memerlukan akses lokasi untuk mencatat posisi kamu saat absen."

@@ -181,6 +181,13 @@ export type EmploymentData = {
 };
 
 export type WorkHistory = {
+  id: string;
+  previousCompany: string | null;
+  previousPosition: string | null;
+  previousDuration: string | null;
+};
+
+export type WorkHistoryInput = {
   previousCompany: string | null;
   previousPosition: string | null;
   previousDuration: string | null;
@@ -209,17 +216,26 @@ export type Payroll = {
 };
 
 export type Training = {
-  trainingHistory: string | null;
+  id: string;
+  name: string;
+  organizer: string | null;
+  period: string | null;
+};
+
+export type TrainingInput = {
+  name: string;
+  organizer: string | null;
+  period: string | null;
 };
 
 export type ProfileData = {
   personalIdentity: PersonalIdentity | null;
   contact: Contact | null;
   employmentData: EmploymentData | null;
-  workHistory: WorkHistory | null;
+  workHistory: WorkHistory[];
   administrativeDocument: AdministrativeDocument | null;
   payroll: Payroll | null;
-  training: Training | null;
+  training: Training[];
 };
 
 /** Field name yang diterima PUT /api/profile/documents — satu per request (partial upload). */
@@ -717,6 +733,23 @@ export function useEnrollFaceMutation() {
   });
 }
 
+/** Ganti foto profil sendiri, dipilih manual dari galeri — lihat PUT /api/profile/avatar. */
+export function useUpdateProfileImageMutation() {
+  const api = useApi();
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (formData: FormData) =>
+      api<{ ok: true; message: string } | { ok: false; error: string }>('/api/profile/avatar', {
+        method: 'PUT',
+        body: formData,
+      }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['me'] });
+    },
+  });
+}
+
 export function useResetFaceMutation() {
   const api = useApi();
   const queryClient = useQueryClient();
@@ -793,13 +826,49 @@ export function useUpdateEmploymentDataMutation() {
   });
 }
 
+export function useCreateWorkHistoryMutation() {
+  const api = useApi();
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (input: WorkHistoryInput) =>
+      api<ActionResult>('/api/profile/work-history', { method: 'POST', body: JSON.stringify(input) }),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['profile-data'] }),
+  });
+}
+
 export function useUpdateWorkHistoryMutation() {
   const api = useApi();
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: (input: WorkHistory) =>
-      api<ActionResult>('/api/profile/work-history', { method: 'PUT', body: JSON.stringify(input) }),
+    mutationFn: ({ id, input }: { id: string; input: WorkHistoryInput }) =>
+      api<ActionResult>(`/api/profile/work-history/${id}`, {
+        method: 'PUT',
+        body: JSON.stringify(input),
+      }),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['profile-data'] }),
+  });
+}
+
+export function useDeleteWorkHistoryMutation() {
+  const api = useApi();
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (id: string) =>
+      api<ActionResult>(`/api/profile/work-history/${id}`, { method: 'DELETE' }),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['profile-data'] }),
+  });
+}
+
+export function useCreateTrainingMutation() {
+  const api = useApi();
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (input: TrainingInput) =>
+      api<ActionResult>('/api/profile/training', { method: 'POST', body: JSON.stringify(input) }),
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ['profile-data'] }),
   });
 }
@@ -809,8 +878,22 @@ export function useUpdateTrainingMutation() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: (input: Training) =>
-      api<ActionResult>('/api/profile/training', { method: 'PUT', body: JSON.stringify(input) }),
+    mutationFn: ({ id, input }: { id: string; input: TrainingInput }) =>
+      api<ActionResult>(`/api/profile/training/${id}`, {
+        method: 'PUT',
+        body: JSON.stringify(input),
+      }),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['profile-data'] }),
+  });
+}
+
+export function useDeleteTrainingMutation() {
+  const api = useApi();
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (id: string) =>
+      api<ActionResult>(`/api/profile/training/${id}`, { method: 'DELETE' }),
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ['profile-data'] }),
   });
 }

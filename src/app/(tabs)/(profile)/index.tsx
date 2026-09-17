@@ -1,15 +1,25 @@
 import { useClerk } from '@clerk/expo';
 import * as Application from 'expo-application';
+import { File } from 'expo-file-system';
+import * as ImagePicker from 'expo-image-picker';
 import { router } from 'expo-router';
 import { useState } from 'react';
-import { ActivityIndicator, Pressable, RefreshControl, ScrollView, Switch, View } from 'react-native';
+import {
+  ActivityIndicator,
+  Alert,
+  Pressable,
+  RefreshControl,
+  ScrollView,
+  Switch,
+  View,
+} from 'react-native';
 import { Text } from '@/components/ui/text';
 
 import { Avatar } from '@/components/avatar';
 import { Icon, type IoniconsIconName } from '@/components/icon';
 import { SimpleRow } from '@/components/simple-row';
 import { type ThemePreference, useThemePreference } from '@/hooks/use-theme-preference';
-import { useFaceStatusQuery, useMeQuery } from '@/lib/queries';
+import { useFaceStatusQuery, useMeQuery, useUpdateProfileImageMutation } from '@/lib/queries';
 
 const THEME_MODE_LABEL: Record<ThemePreference, string> = {
   light: 'Terang',
@@ -103,6 +113,7 @@ export default function ProfileScreen() {
   const { signOut } = useClerk();
   const me = useMeQuery();
   const faceStatus = useFaceStatusQuery();
+  const updateProfileImage = useUpdateProfileImageMutation();
   const [pushEnabled, setPushEnabled] = useState(true);
   const [reminderEnabled, setReminderEnabled] = useState(true);
   const { preference: themeMode, setPreference: setThemeMode } = useThemePreference();
@@ -110,6 +121,42 @@ export default function ProfileScreen() {
   const handleSignOut = async () => {
     await signOut();
     router.replace('/welcome');
+  };
+
+  const handleChangeProfileImage = async () => {
+    const permission = await ImagePicker.requestMediaLibraryPermissionsAsync();
+
+    if (!permission.granted) {
+      Alert.alert(
+        'Izin diperlukan',
+        'Aplikasi memerlukan akses galeri untuk memilih foto profil.',
+      );
+      return;
+    }
+
+    const result = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ['images'],
+      allowsEditing: true,
+      aspect: [1, 1],
+      quality: 0.7,
+    });
+
+    const asset = result.canceled ? null : result.assets[0];
+
+    if (!asset) return;
+
+    try {
+      const formData = new FormData();
+      formData.append('photo', new File(asset.uri), 'profile.jpg');
+
+      const response = await updateProfileImage.mutateAsync(formData);
+
+      if (!response.ok) {
+        Alert.alert('Gagal', response.error);
+      }
+    } catch (error) {
+      Alert.alert('Gagal', error instanceof Error ? error.message : 'Gagal mengunggah foto');
+    }
   };
 
   if (me.isPending) {
@@ -160,7 +207,20 @@ export default function ProfileScreen() {
 
       <View className="-mt-12 gap-1 px-5">
         <View className="items-center">
-          <Avatar name={user.name} imageUri={user.profileImageUrl} size={88} />
+          <Pressable
+            onPress={handleChangeProfileImage}
+            disabled={updateProfileImage.isPending}
+            className="relative">
+            <Avatar name={user.name} imageUri={user.profileImageUrl} size={88} />
+
+            <View className="absolute bottom-0 right-0 size-7 items-center justify-center rounded-full bg-primary border-2 border-background">
+              {updateProfileImage.isPending ? (
+                <ActivityIndicator size="small" color="white" />
+              ) : (
+                <Icon name="camera" size={14} color="white" />
+              )}
+            </View>
+          </Pressable>
         </View>
 
         <View className="items-center gap-0.5 pt-1">

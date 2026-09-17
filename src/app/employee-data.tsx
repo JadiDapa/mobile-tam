@@ -80,18 +80,14 @@ export default function EmployeeDataScreen() {
     : 'Belum diisi';
 
   const workHistorySubtitle =
-    data.workHistory && (data.workHistory.previousCompany || data.workHistory.previousPosition)
-      ? [data.workHistory.previousPosition, data.workHistory.previousCompany]
-          .filter(Boolean)
-          .join(' di ')
-      : 'Belum diisi';
+    data.workHistory.length > 0 ? `${data.workHistory.length} riwayat pekerjaan` : 'Belum diisi';
 
   const uploadedDocumentCount = data.administrativeDocument
     ? DOCUMENT_URL_FIELDS.filter((field) => Boolean(data.administrativeDocument![field])).length
     : 0;
   const documentsSubtitle = `${uploadedDocumentCount}/${DOCUMENT_URL_FIELDS.length} dokumen terunggah`;
 
-  const trainingSubtitle = data.training?.trainingHistory ? data.training.trainingHistory : 'Belum diisi';
+  const trainingSubtitle = data.training.length > 0 ? `${data.training.length} pelatihan` : 'Belum diisi';
 
   return (
     <ScrollView

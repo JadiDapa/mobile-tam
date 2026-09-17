@@ -608,6 +608,89 @@ export function useEmployeesQuery() {
   });
 }
 
+/** Status rekap harian (dashboard/lib/attendance.ts `DayStatus`). */
+export type RecapDayStatus =
+  | 'HADIR_DIKANTOR'
+  | 'LUAR_RADIUS'
+  | 'DINAS_LUAR'
+  | 'SAKIT'
+  | 'IZIN'
+  | 'ALFA'
+  | 'CUTI'
+  | 'LIBUR';
+
+/** Satu baris rekap harian — sudah diurutkan server: tidak hadir -> paling telat -> paling awal. */
+export type AdminDailyRecapItem = {
+  userId: string;
+  name: string;
+  profileImageUrl: string | null;
+  status: RecapDayStatus;
+  isLate: boolean;
+  lateMinutes: number;
+  checkInTime: string | null;
+  checkOutTime: string | null;
+};
+
+/** Satu baris rekap bulanan per karyawan. */
+export type AdminMonthlyRecapItem = {
+  userId: string;
+  name: string;
+  profileImageUrl: string | null;
+  nip: string;
+  /** Hadir di kantor + dinas luar (dinas luar dihitung hadir). */
+  totalAttend: number;
+  lateCount: number;
+  /** Sakit + izin + cuti + alfa ditotal jadi satu angka. */
+  totalNotAttend: number;
+  totalLemburMinutes: number;
+};
+
+/** Rekap absensi seluruh karyawan — admin saja. `date`: "YYYY-MM-DD", `month`: "YYYY-MM". */
+export function useAdminDailyRecapQuery(date: string) {
+  const api = useApi();
+
+  return useQuery({
+    queryKey: ['admin-attendance-recap', 'daily', date],
+    queryFn: () =>
+      api<{ items: AdminDailyRecapItem[] }>(
+        `/api/admin/attendance-recap?mode=daily&date=${date}`,
+      ),
+  });
+}
+
+export function useAdminMonthlyRecapQuery(month: string) {
+  const api = useApi();
+
+  return useQuery({
+    queryKey: ['admin-attendance-recap', 'monthly', month],
+    queryFn: () =>
+      api<{ items: AdminMonthlyRecapItem[] }>(
+        `/api/admin/attendance-recap?mode=monthly&month=${month}`,
+      ),
+  });
+}
+
+export type AdminUserListItem = {
+  id: string;
+  name: string;
+  role: 'EMPLOYEE' | 'ADMIN' | 'SUPERVISOR' | 'MANAGER';
+  profileImageUrl: string | null;
+  isActive: boolean;
+  nip: string | null;
+  startDate: string | null;
+};
+
+/** Seluruh pengguna, difilter opsional per role — admin saja. */
+export function useAdminUsersQuery(role?: AdminUserListItem['role']) {
+  const api = useApi();
+
+  return useQuery({
+    queryKey: ['admin-users', role ?? null],
+    queryFn: () =>
+      api<{ items: AdminUserListItem[] }>(`/api/admin/users${role ? `?role=${role}` : ''}`),
+  });
+}
+
 export function useFaceStatusQuery() {
   const api = useApi();
 

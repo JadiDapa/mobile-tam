@@ -3,6 +3,7 @@ import type {
   Gender,
   LeaveReasonCategory,
   MaritalStatus,
+  RecapDayStatus,
   Religion,
   TransportationType,
   WorkMode,
@@ -132,6 +133,47 @@ export const EMPLOYMENT_STATUS_LABEL: Record<EmploymentStatus, string> = {
 };
 
 export const EMPLOYMENT_STATUS_OPTIONS: EmploymentStatus[] = ['PKWT', 'PKWTT'];
+
+export const ROLE_LABEL: Record<'EMPLOYEE' | 'ADMIN' | 'SUPERVISOR' | 'MANAGER', string> = {
+  EMPLOYEE: 'Karyawan',
+  ADMIN: 'Admin',
+  SUPERVISOR: 'Supervisor',
+  MANAGER: 'Manager',
+};
+
+/** Label & warna status rekap harian (dashboard/lib/attendance.ts `DAY_STATUS_LABEL`). */
+export const RECAP_DAY_STATUS_LABEL: Record<RecapDayStatus, string> = {
+  HADIR_DIKANTOR: 'Hadir',
+  LUAR_RADIUS: 'Luar Radius',
+  DINAS_LUAR: 'Dinas Luar',
+  SAKIT: 'Sakit',
+  IZIN: 'Izin',
+  ALFA: 'Tidak Hadir',
+  CUTI: 'Cuti',
+  LIBUR: 'Libur',
+};
+
+export const RECAP_DAY_STATUS_DOT_CLASSES: Record<RecapDayStatus, string> = {
+  HADIR_DIKANTOR: 'bg-green-500',
+  LUAR_RADIUS: 'bg-blue-500',
+  DINAS_LUAR: 'bg-blue-500',
+  SAKIT: 'bg-amber-500',
+  IZIN: 'bg-amber-500',
+  ALFA: 'bg-red-500',
+  CUTI: 'bg-amber-500',
+  LIBUR: 'bg-neutral-400',
+};
+
+export const RECAP_DAY_STATUS_TEXT_CLASSES: Record<RecapDayStatus, string> = {
+  HADIR_DIKANTOR: 'text-green-600 dark:text-green-400',
+  LUAR_RADIUS: 'text-blue-600 dark:text-blue-400',
+  DINAS_LUAR: 'text-blue-600 dark:text-blue-400',
+  SAKIT: 'text-amber-600 dark:text-amber-400',
+  IZIN: 'text-amber-600 dark:text-amber-400',
+  ALFA: 'text-red-600 dark:text-red-400',
+  CUTI: 'text-amber-600 dark:text-amber-400',
+  LIBUR: 'text-muted-foreground',
+};
 
 /** Mode kerja yang bisa dipilih admin saat menyetujui absensi luar radius. */
 /**

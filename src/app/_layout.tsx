@@ -159,6 +159,14 @@ export default function RootLayout() {
               name="employee-data-documents"
               options={{ headerShown: true, title: "Dokumen Administrasi" }}
             />
+            <Stack.Screen
+              name="rekapan-absen"
+              options={{ headerShown: true, title: "Rekapan Absen" }}
+            />
+            <Stack.Screen
+              name="admin-users"
+              options={{ headerShown: true, title: "Daftar Pengguna" }}
+            />
           </Stack>
         </ThemeProvider>
       </QueryClientProvider>

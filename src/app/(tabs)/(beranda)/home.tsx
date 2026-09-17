@@ -514,7 +514,7 @@ export default function BerandaScreen() {
             </View>
           </View> */}
 
-          <MenuGrid />
+          <MenuGrid role={me.data?.role} />
 
           <View className="gap-3">
             <SectionHeader

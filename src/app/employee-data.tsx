@@ -79,15 +79,16 @@ export default function EmployeeDataScreen() {
     ? `${data.employmentData.employeeNumber} · ${EMPLOYMENT_STATUS_LABEL[data.employmentData.employmentStatus]}`
     : 'Belum diisi';
 
-  const workHistorySubtitle =
-    data.workHistory.length > 0 ? `${data.workHistory.length} riwayat pekerjaan` : 'Belum diisi';
+  const workHistoryCount = data.workHistory?.length ?? 0;
+  const workHistorySubtitle = workHistoryCount > 0 ? `${workHistoryCount} riwayat pekerjaan` : 'Belum diisi';
 
   const uploadedDocumentCount = data.administrativeDocument
     ? DOCUMENT_URL_FIELDS.filter((field) => Boolean(data.administrativeDocument![field])).length
     : 0;
   const documentsSubtitle = `${uploadedDocumentCount}/${DOCUMENT_URL_FIELDS.length} dokumen terunggah`;
 
-  const trainingSubtitle = data.training.length > 0 ? `${data.training.length} pelatihan` : 'Belum diisi';
+  const trainingCount = data.training?.length ?? 0;
+  const trainingSubtitle = trainingCount > 0 ? `${trainingCount} pelatihan` : 'Belum diisi';
 
   return (
     <ScrollView

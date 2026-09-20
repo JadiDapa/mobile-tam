@@ -17,6 +17,8 @@ export type DayRecord = {
   checkIn: string | null;
   checkOut: string | null;
   totalHours: string;
+  /** "Ditambahkan admin" / "Diubah admin" — jejak koreksi admin pada hari ini. */
+  adminLabel?: string | null;
 };
 
 // Background color of the date block — doubles as the status indicator, so no separate badge is needed.
@@ -68,6 +70,7 @@ export function AttendanceCard({ record }: { record: DayRecord }) {
             {record.isLate
               ? ` · Terlambat${record.lateBy ? ` ${record.lateBy}` : ""}`
               : ""}
+            {record.adminLabel ? ` · ${record.adminLabel}` : ""}
           </Text>
         </View>
       </View>

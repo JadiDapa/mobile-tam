@@ -6,7 +6,9 @@ import { Text } from '@/components/ui/text';
 import { formatShortDate } from '@/lib/date';
 import { useConfirmMissedCheckoutMutation, useUnresolvedCheckoutsQuery } from '@/lib/queries';
 
+/** Jam pulang otomatis — harus sama dengan `DEFAULT_MISSED_CHECKOUT_TIME` di server. */
 const DEFAULT_HOUR = 17;
+const AUTO_TIME_LABEL = '17:00';
 
 function defaultTime() {
   const date = new Date();
@@ -21,13 +23,15 @@ function formatTime(date: Date) {
 /**
  * Modal pemblokir: muncul di atas layar Beranda kalau ada hari sebelumnya yang
  * sudah absen masuk tapi belum absen pulang. Tidak bisa ditutup tanpa
- * mengonfirmasi — karyawan wajib memutuskan jam pulangnya (default 17:00,
- * bisa diubah) sebelum absen masuk hari ini diizinkan.
+ * mengonfirmasi sebelum absen masuk hari ini diizinkan. Karyawan cukup menekan
+ * "Otomatis pukul 17:00" tanpa memilih jam; memilih jam sendiri tetap
+ * tersedia kalau pulangnya memang berbeda.
  */
 export function MissedCheckoutModal() {
   const unresolved = useUnresolvedCheckoutsQuery();
   const confirmMutation = useConfirmMissedCheckoutMutation();
   const [time, setTime] = useState<Date>(defaultTime);
+  const [custom, setCustom] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   const days = unresolved.data?.days ?? [];
@@ -36,12 +40,13 @@ export function MissedCheckoutModal() {
 
   if (!visible || !currentDay) return null;
 
-  function handleConfirm() {
+  /** `chosenTime` kosong = otomatis: server memakai 17:00 hari itu. */
+  function handleConfirm(chosenTime?: string) {
     if (!currentDay) return;
 
     setError(null);
     confirmMutation.mutate(
-      { workDate: currentDay, time: formatTime(time) },
+      { workDate: currentDay, time: chosenTime },
       {
         onSuccess: (result) => {
           if (!result.ok) {
@@ -49,6 +54,7 @@ export function MissedCheckoutModal() {
             return;
           }
           setTime(defaultTime());
+          setCustom(false);
         },
         onError: () => setError('Gagal mengonfirmasi absen pulang, coba lagi'),
       },
@@ -68,24 +74,39 @@ export function MissedCheckoutModal() {
             {days.length > 1 ? ` (${days.length} hari belum dikonfirmasi)` : ''}
           </Text>
 
-          <View className="gap-1.5">
-            <Text className="text-sm font-medium text-text">Jam Pulang</Text>
-            <DateTimePicker
-              value={time}
-              mode="time"
-              presentation="inline"
-              onValueChange={(_event, date) => setTime(date)}
-            />
-          </View>
+          {custom && (
+            <View className="gap-1.5">
+              <Text className="text-sm font-medium text-text">Jam Pulang</Text>
+              <DateTimePicker
+                value={time}
+                mode="time"
+                presentation="inline"
+                onValueChange={(_event, date) => setTime(date)}
+              />
+            </View>
+          )}
 
           {error && <Text className="text-center text-xs text-red-600 dark:text-red-400">{error}</Text>}
 
           <Pressable
-            onPress={handleConfirm}
+            onPress={() => handleConfirm(custom ? formatTime(time) : undefined)}
             disabled={confirmMutation.isPending}
             className="items-center rounded-xl bg-primary py-3.5">
             <Text className="font-medium text-primary-foreground">
-              {confirmMutation.isPending ? 'Menyimpan...' : `Konfirmasi Pulang ${formatTime(time)}`}
+              {confirmMutation.isPending
+                ? 'Menyimpan...'
+                : custom
+                  ? `Konfirmasi Pulang ${formatTime(time)}`
+                  : `Otomatis pukul ${AUTO_TIME_LABEL}`}
+            </Text>
+          </Pressable>
+
+          <Pressable
+            onPress={() => setCustom((value) => !value)}
+            disabled={confirmMutation.isPending}
+            className="items-center py-1">
+            <Text className="text-sm text-muted-foreground">
+              {custom ? 'Pakai otomatis saja' : 'Pilih jam sendiri'}
             </Text>
           </Pressable>
         </View>

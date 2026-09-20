@@ -48,6 +48,19 @@ const LEAVE_TYPE_TO_STATUS: Record<string, DayStatus> = {
   CUTI: "Cuti",
 };
 
+/** Jejak admin pada satu hari — penambahan lebih penting daripada koreksi jam. */
+function adminLabelFor(day: {
+  checkIn: { createdByAdminId?: string | null; editedById?: string | null } | null;
+  checkOut: { createdByAdminId?: string | null; editedById?: string | null } | null;
+}) {
+  const entries = [day.checkIn, day.checkOut];
+
+  if (entries.some((entry) => entry?.createdByAdminId)) return "Ditambahkan admin";
+  if (entries.some((entry) => entry?.editedById)) return "Diubah admin";
+
+  return null;
+}
+
 export default function HistoriScreen() {
   const [range, setRange] = useState<DateRange>(() => {
     const today = new Date();
@@ -86,6 +99,7 @@ export default function HistoriScreen() {
               location:
                 WORK_MODE_LABEL[day.checkIn.workMode] ?? day.checkIn.workMode,
               status: "Hadir",
+              adminLabel: adminLabelFor(day),
               isLate: day.checkIn.isLate,
               lateBy:
                 day.checkIn.lateMinutes > 0

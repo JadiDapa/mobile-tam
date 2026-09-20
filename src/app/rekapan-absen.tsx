@@ -2,6 +2,7 @@ import { useMemo, useState } from 'react';
 import { ActivityIndicator, FlatList, Pressable, RefreshControl, View } from 'react-native';
 import { Text } from '@/components/ui/text';
 
+import { AdminAttendanceSheet } from '@/components/admin-attendance-sheet';
 import { Avatar } from '@/components/avatar';
 import { Icon } from '@/components/icon';
 import { MonthYearPicker } from '@/components/month-year-picker';
@@ -18,6 +19,7 @@ import {
   type AdminMonthlyRecapItem,
   useAdminDailyRecapQuery,
   useAdminMonthlyRecapQuery,
+  useMeQuery,
 } from '@/lib/queries';
 
 const MODES = ['Harian', 'Bulanan'] as const;
@@ -31,9 +33,26 @@ function currentMonthInput() {
   return todayInput().slice(0, 7);
 }
 
-function DailyRow({ item }: { item: AdminDailyRecapItem }) {
+/** Jejak admin pada baris hari ini — penambahan lebih penting daripada koreksi jam. */
+function adminLabel(item: AdminDailyRecapItem) {
+  const entries = [item.checkIn, item.checkOut];
+
+  if (entries.some((entry) => entry?.addedByAdmin)) return 'Ditambahkan admin';
+  if (entries.some((entry) => entry?.editedByAdmin) || item.overtimes.some((overtime) => overtime.editedByAdmin)) {
+    return 'Diubah admin';
+  }
+
+  return null;
+}
+
+function DailyRow({ item, onPress }: { item: AdminDailyRecapItem; onPress?: () => void }) {
+  const label = adminLabel(item);
+
   return (
-    <View className="flex-row items-center gap-3 rounded-2xl bg-muted p-3">
+    <Pressable
+      disabled={!onPress}
+      onPress={onPress}
+      className="flex-row items-center gap-3 rounded-2xl bg-muted p-3 active:opacity-80">
       <Avatar name={item.name} imageUri={item.profileImageUrl} size={40} />
       <View className="flex-1">
         <Text numberOfLines={1} className="text-sm font-medium text-text">
@@ -45,10 +64,14 @@ function DailyRow({ item }: { item: AdminDailyRecapItem }) {
             {RECAP_DAY_STATUS_LABEL[item.status]}
           </Text>
         </View>
+        {label && <Text className="pt-0.5 text-[11px] font-medium text-primary">{label}</Text>}
       </View>
       <View className="items-end gap-0.5">
         {item.checkInTime && (
-          <Text className="text-xs text-muted-foreground">{formatTime(item.checkInTime)}</Text>
+          <Text className="text-xs text-muted-foreground">Masuk {formatTime(item.checkInTime)}</Text>
+        )}
+        {item.checkOutTime && (
+          <Text className="text-xs text-muted-foreground">Pulang {formatTime(item.checkOutTime)}</Text>
         )}
         {item.isLate && (
           <Text className="text-xs font-medium text-red-600 dark:text-red-400">
@@ -56,7 +79,8 @@ function DailyRow({ item }: { item: AdminDailyRecapItem }) {
           </Text>
         )}
       </View>
-    </View>
+      {onPress && <Icon name="create-outline" size={18} tone="muted" />}
+    </Pressable>
   );
 }
 
@@ -92,7 +116,14 @@ export default function RekapanAbsenScreen() {
   const [isDatePickerOpen, setDatePickerOpen] = useState(false);
   const [isMonthPickerOpen, setMonthPickerOpen] = useState(false);
 
+  // Hanya admin yang boleh menambah/mengoreksi absensi — supervisor & manager melihat rekap saja.
+  const me = useMeQuery();
+  const canEdit = me.data?.role === 'ADMIN';
+  const [selectedUserId, setSelectedUserId] = useState<string | null>(null);
+
   const daily = useAdminDailyRecapQuery(date);
+  // Diturunkan dari data terbaru, bukan disalin — supaya sheet ikut menampilkan hasil koreksi.
+  const selectedItem = daily.data?.items.find((item) => item.userId === selectedUserId) ?? null;
   const monthly = useAdminMonthlyRecapQuery(month);
 
   const isDaily = mode === 'Harian';
@@ -146,7 +177,9 @@ export default function RekapanAbsenScreen() {
               </Text>
             )
           }
-          renderItem={({ item }) => <DailyRow item={item} />}
+          renderItem={({ item }) => (
+            <DailyRow item={item} onPress={canEdit ? () => setSelectedUserId(item.userId) : undefined} />
+          )}
         />
       ) : (
         <FlatList
@@ -170,6 +203,8 @@ export default function RekapanAbsenScreen() {
           renderItem={({ item }) => <MonthlyRow item={item} />}
         />
       )}
+
+      <AdminAttendanceSheet item={selectedItem} date={date} onClose={() => setSelectedUserId(null)} />
 
       <SingleDatePicker
         visible={isDatePickerOpen}

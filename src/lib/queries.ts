@@ -25,6 +25,10 @@ export type AttendanceRecord = {
   lateMinutes: number;
   isWithinRadius: boolean | null;
   isManual: boolean;
+  /** Diisi (id admin) kalau baris ini ditambahkan admin — label "Ditambahkan admin". */
+  createdByAdminId?: string | null;
+  /** Diisi (id admin) kalau jamnya pernah dikoreksi admin — label "Diubah admin". */
+  editedById?: string | null;
   workMode: string;
   approvalStatus: 'PENDING' | 'APPROVED' | 'REJECTED' | null;
 };
@@ -635,6 +639,23 @@ export type RecapDayStatus =
   | 'CUTI'
   | 'LIBUR';
 
+/** Satu absensi di rekap harian admin — cukup untuk mengoreksi jamnya. */
+export type AdminRecapAttendanceEntry = {
+  id: string;
+  timestamp: string;
+  addedByAdmin: boolean;
+  editedByAdmin: boolean;
+  originalTimestamp: string | null;
+};
+
+export type AdminRecapOvertimeEntry = {
+  id: string;
+  startAt: string;
+  endAt: string | null;
+  status: 'PENDING' | 'APPROVED' | 'REJECTED';
+  editedByAdmin: boolean;
+};
+
 /** Satu baris rekap harian — sudah diurutkan server: tidak hadir -> paling telat -> paling awal. */
 export type AdminDailyRecapItem = {
   userId: string;
@@ -645,6 +666,9 @@ export type AdminDailyRecapItem = {
   lateMinutes: number;
   checkInTime: string | null;
   checkOutTime: string | null;
+  checkIn: AdminRecapAttendanceEntry | null;
+  checkOut: AdminRecapAttendanceEntry | null;
+  overtimes: AdminRecapOvertimeEntry[];
 };
 
 /** Satu baris rekap bulanan per karyawan. */
@@ -671,6 +695,66 @@ export function useAdminDailyRecapQuery(date: string) {
       api<{ items: AdminDailyRecapItem[] }>(
         `/api/admin/attendance-recap?mode=daily&date=${date}`,
       ),
+  });
+}
+
+/** Semua tampilan yang memuat absensi/lembur ikut disegarkan setelah admin menambah atau mengoreksi. */
+function invalidateAttendanceViews(queryClient: ReturnType<typeof useQueryClient>) {
+  queryClient.invalidateQueries({ queryKey: ['admin-attendance-recap'] });
+  queryClient.invalidateQueries({ queryKey: ['attendance'] });
+  queryClient.invalidateQueries({ queryKey: ['overtime'] });
+}
+
+/**
+ * Admin menambahkan absen masuk/pulang untuk pengguna yang lupa absen — barisnya
+ * ditandai "Ditambahkan admin". `workDate`: "YYYY-MM-DD", `time`: "HH:mm".
+ * `reviewNote` (alasan) wajib.
+ */
+export function useAdminAddAttendanceMutation() {
+  const api = useApi();
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (input: {
+      userId: string;
+      workDate: string;
+      type: 'CHECK_IN' | 'CHECK_OUT';
+      time: string;
+      workMode: WorkMode;
+      reviewNote: string;
+    }) => api<ActionResult>('/api/admin/attendance', { method: 'POST', body: JSON.stringify(input) }),
+    onSuccess: () => invalidateAttendanceViews(queryClient),
+  });
+}
+
+/** Admin mengoreksi jam absensi yang sudah tercatat. `time`: "HH:mm", `editNote` wajib. */
+export function useAdminUpdateAttendanceTimeMutation() {
+  const api = useApi();
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: ({ id, ...input }: { id: string; time: string; editNote: string }) =>
+      api<ActionResult>(`/api/admin/attendance/${id}`, { method: 'PATCH', body: JSON.stringify(input) }),
+    onSuccess: () => invalidateAttendanceViews(queryClient),
+  });
+}
+
+/** Admin mengoreksi jam lembur. `endTime` kosong = jam selesai tidak diubah. `editNote` wajib. */
+export function useAdminUpdateOvertimeTimeMutation() {
+  const api = useApi();
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: ({
+      id,
+      ...input
+    }: {
+      id: string;
+      startTime: string;
+      endTime?: string;
+      editNote: string;
+    }) => api<ActionResult>(`/api/admin/overtime/${id}`, { method: 'PATCH', body: JSON.stringify(input) }),
+    onSuccess: () => invalidateAttendanceViews(queryClient),
   });
 }
 

@@ -1,5 +1,5 @@
 import { router } from 'expo-router';
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { ActivityIndicator, Alert, Pressable, ScrollView, View } from 'react-native';
 import { Text } from '@/components/ui/text';
 
@@ -10,21 +10,22 @@ export default function EmployeeDataContactScreen() {
   const profile = useProfileDataQuery();
   const updateMutation = useUpdateContactMutation();
 
-  const [form, setForm] = useState<Contact | null>(null);
+  // `draft` stays null until the first edit; until then the form mirrors the saved profile.
+  const [draft, setForm] = useState<Contact | null>(null);
   const [errors, setErrors] = useState<Partial<Record<keyof Contact, string>>>({});
 
-  useEffect(() => {
-    if (form || !profile.data) return;
-
-    const existing = profile.data.contact;
-    setForm({
-      domicileAddress: existing?.domicileAddress ?? '',
-      ktpAddress: existing?.ktpAddress ?? '',
-      emergencyContactName: existing?.emergencyContactName ?? '',
-      emergencyContactRelation: existing?.emergencyContactRelation ?? '',
-      emergencyContactPhone: existing?.emergencyContactPhone ?? '',
-    });
-  }, [profile.data, form]);
+  const existing = profile.data?.contact;
+  const form: Contact | null =
+    draft ??
+    (profile.data
+      ? {
+          domicileAddress: existing?.domicileAddress ?? '',
+          ktpAddress: existing?.ktpAddress ?? '',
+          emergencyContactName: existing?.emergencyContactName ?? '',
+          emergencyContactRelation: existing?.emergencyContactRelation ?? '',
+          emergencyContactPhone: existing?.emergencyContactPhone ?? '',
+        }
+      : null);
 
   function handleSubmit() {
     if (!form) return;

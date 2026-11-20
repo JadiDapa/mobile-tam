@@ -1,4 +1,4 @@
-import { Modal, Pressable, View } from 'react-native';
+import { Modal, Pressable } from 'react-native';
 import { Text } from '@/components/ui/text';
 
 import { Icon } from '@/components/icon';

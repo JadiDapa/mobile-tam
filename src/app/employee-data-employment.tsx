@@ -1,5 +1,5 @@
 import { router } from 'expo-router';
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { ActivityIndicator, Alert, Pressable, ScrollView, View } from 'react-native';
 import { Text } from '@/components/ui/text';
 
@@ -23,24 +23,25 @@ export default function EmployeeDataEmploymentScreen() {
   const profile = useProfileDataQuery();
   const updateMutation = useUpdateEmploymentDataMutation();
 
-  const [form, setForm] = useState<FormState | null>(null);
+  // `draft` stays null until the first edit; until then the form mirrors the saved profile.
+  const [draft, setForm] = useState<FormState | null>(null);
   const [errors, setErrors] = useState<Partial<Record<keyof FormState, string>>>({});
   const [isStatusPickerOpen, setStatusPickerOpen] = useState(false);
   const [isStartDatePickerOpen, setStartDatePickerOpen] = useState(false);
   const [isEndDatePickerOpen, setEndDatePickerOpen] = useState(false);
 
-  useEffect(() => {
-    if (form || !profile.data) return;
-
-    const existing = profile.data.employmentData;
-    setForm({
-      employeeNumber: existing?.employeeNumber ?? '',
-      workLocation: existing?.workLocation ?? '',
-      employmentStatus: existing?.employmentStatus ?? null,
-      startDate: existing?.startDate ? existing.startDate.slice(0, 10) : '',
-      contractEndDate: existing?.contractEndDate ? existing.contractEndDate.slice(0, 10) : '',
-    });
-  }, [profile.data, form]);
+  const existing = profile.data?.employmentData;
+  const form: FormState | null =
+    draft ??
+    (profile.data
+      ? {
+          employeeNumber: existing?.employeeNumber ?? '',
+          workLocation: existing?.workLocation ?? '',
+          employmentStatus: existing?.employmentStatus ?? null,
+          startDate: existing?.startDate ? existing.startDate.slice(0, 10) : '',
+          contractEndDate: existing?.contractEndDate ? existing.contractEndDate.slice(0, 10) : '',
+        }
+      : null);
 
   function handleSubmit() {
     if (!form) return;

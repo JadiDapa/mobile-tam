@@ -82,6 +82,8 @@ export type AttendanceSettings = {
     isWorkingDay: boolean;
     checkInTime: string;
     checkOutTime: string;
+    /** Jam Mulai Lembur "HH:mm" — opsional karena backend lama belum mengirimnya. */
+    overtimeStartTime?: string;
   }[];
 };
 
@@ -368,17 +370,45 @@ export function useReviewLeaveMutation() {
   });
 }
 
+/**
+ * Satu Absen Pulang Terlewat, siap tampil — cocok dengan `MissedCheckoutDay`
+ * di dashboard (lib/missed-checkout.ts). Semua tanggal/jam sudah diformat di
+ * server supaya tidak bergeser mengikuti zona waktu perangkat.
+ */
+export type MissedCheckoutDay = {
+  /** "YYYY-MM-DD" — dikirim balik saat konfirmasi. */
+  workDate: string;
+  /** "Sabtu, 14 Nov" */
+  dayLabel: string;
+  /** "HH:mm" — jam absen masuk hari itu. */
+  checkInTime: string;
+  /** "HH:mm" — Jam Pulang Hari Kerja itu, dipakai tombol "Otomatis". */
+  autoCheckOutTime: string;
+};
+
+/** Cocok dengan respons GET /api/attendance/missed (dashboard/app/api/attendance/missed/route.ts). */
+export type MissedCheckoutResponse = {
+  /** "YYYY-MM-DD" saja — selalu ada (kompatibel dengan mobile 1.1.0). */
+  days: string[];
+  /** Opsional karena backend lama belum mengirimnya. */
+  missedDays?: MissedCheckoutDay[];
+};
+
 /** Hari-hari yang absen masuknya ada tapi absen pulangnya belum dikonfirmasi. */
 export function useUnresolvedCheckoutsQuery() {
   const api = useApi();
 
   return useQuery({
     queryKey: ['attendance-missed'],
-    queryFn: () => api<{ days: string[] }>('/api/attendance/missed'),
+    queryFn: () => api<MissedCheckoutResponse>('/api/attendance/missed'),
   });
 }
 
-/** `workDate`: "YYYY-MM-DD". `time` kosong berarti default 17:00 (lihat server). */
+/**
+ * `workDate`: "YYYY-MM-DD". `time` kosong berarti otomatis: server memakai Jam
+ * Pulang Hari Kerja tanggal itu. Jam yang tidak sah (≤ jam masuk) ditolak 400
+ * — pesannya ada di `ApiError.message`.
+ */
 export function useConfirmMissedCheckoutMutation() {
   const api = useApi();
   const queryClient = useQueryClient();
@@ -402,7 +432,7 @@ export function useOvertimeHistoryQuery() {
   });
 }
 
-/** `startTime`: "HH:mm", harus >= 18:00 (divalidasi ulang di server). */
+/** `startTime`: "HH:mm", harus >= Jam Mulai Lembur hari ini (divalidasi ulang di server). */
 export function useStartOvertimeMutation() {
   const api = useApi();
   const queryClient = useQueryClient();

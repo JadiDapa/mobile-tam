@@ -53,6 +53,23 @@ export function formatTime(iso: string) {
   return `${String(date.getHours()).padStart(2, '0')}:${String(date.getMinutes()).padStart(2, '0')}`;
 }
 
+/** "HH:mm" → menit sejak tengah malam; null kalau formatnya rusak. */
+export function parseTimeToMinutes(time: string): number | null {
+  const match = /^(\d{1,2}):(\d{2})$/.exec(time);
+  if (!match) return null;
+
+  const hours = Number(match[1]);
+  const minutes = Number(match[2]);
+  if (hours > 23 || minutes > 59) return null;
+
+  return hours * 60 + minutes;
+}
+
+/** `Date` → "HH:mm" in the device's zone — for time pickers, which show device wall-clock time. */
+export function formatHourMinute(date: Date) {
+  return `${String(date.getHours()).padStart(2, '0')}:${String(date.getMinutes()).padStart(2, '0')}`;
+}
+
 /** Duration between two ISO timestamps as "1j 30m" / "45m" — "--:--" when either side is missing or negative. */
 export function formatDuration(startIso: string | null, endIso: string | null) {
   if (!startIso || !endIso) return '--:--';

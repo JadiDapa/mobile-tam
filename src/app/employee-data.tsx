@@ -4,13 +4,7 @@ import { Text } from '@/components/ui/text';
 
 import { Icon, type IoniconsIconName } from '@/components/icon';
 import { SimpleRow } from '@/components/simple-row';
-import {
-  EMPLOYMENT_STATUS_LABEL,
-  GENDER_LABEL,
-  MARITAL_STATUS_LABEL,
-  RELIGION_LABEL,
-} from '@/constants/status';
-import { formatShortDate } from '@/lib/date';
+import { EMPLOYMENT_STATUS_LABEL, GENDER_LABEL } from '@/constants/status';
 import { useProfileDataQuery } from '@/lib/queries';
 
 function formatRupiah(amount: number) {

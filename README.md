@@ -6,10 +6,10 @@ This app is the mobile client for the [`dashboard`](../dashboard) Next.js backen
 
 ## Features
 
-- **Authentication** — sign in, forgot/reset password, and account requests via Clerk (`@clerk/expo`)
+- **Authentication** — sign in and forgot/reset password via Clerk (`@clerk/expo`). Self sign-up is closed: login and welcome show a "Hubungi Admin" dialog (`src/components/contact-admin-dialog.tsx`, copy in `src/lib/contact-admin.ts`), and the old `request-account` route only redirects to login
 - **Attendance** — camera-based face capture (`expo-camera`) and location capture (`expo-location`) for check-in/out, with an enrollment flow (`face-enrollment.tsx`) to register a face before first use
 - **Leave requests** — Izin, Sakit (sick leave), and Cuti (paid leave) request forms, each with its own flow and status/type badges
-- **Overtime (Lembur)** — request and track overtime, including an end-of-overtime drawer flow
+- **Overtime (Lembur)** — request and track overtime, including an end-of-overtime drawer flow; the earliest start is today's Jam Mulai Lembur from `/api/settings` (`src/lib/overtime.ts`; 18:00 only as a fallback for an older backend)
 - **Field assignment (Dinas Luar)** — create and track off-site work assignments
 - **Attendance history (Histori)** — monthly-grouped attendance records, grouped/separated by month
 - **Approvals** — dedicated approval tabs for leave, overtime, field assignment, and attendance verification requests (for managers/admins)
@@ -108,7 +108,7 @@ The Android manifest requests `CAMERA`, `RECORD_AUDIO`, `ACCESS_COARSE_LOCATION`
 ```
 src/
   app/                  # Expo Router routes (file-based)
-    (auth)/              # Login, forgot/reset password, request account, welcome
+    (auth)/              # Login, forgot/reset password, welcome (request-account → redirect to login)
     (tabs)/
       (beranda)/          # Home tab
       (histori)/          # Attendance history tab

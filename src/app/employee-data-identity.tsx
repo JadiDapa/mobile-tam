@@ -1,7 +1,7 @@
 import * as DocumentPicker from 'expo-document-picker';
 import { File } from 'expo-file-system';
 import { router } from 'expo-router';
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { ActivityIndicator, Alert, Pressable, ScrollView, View } from 'react-native';
 import { Text } from '@/components/ui/text';
 
@@ -37,7 +37,8 @@ export default function EmployeeDataIdentityScreen() {
   const profile = useProfileDataQuery();
   const updateMutation = useUpdatePersonalIdentityMutation();
 
-  const [form, setForm] = useState<FormState | null>(null);
+  // `draft` stays null until the first edit; until then the form mirrors the saved profile.
+  const [draft, setForm] = useState<FormState | null>(null);
   const [photo, setPhoto] = useState<PickedFile | null>(null);
   const [isGenderPickerOpen, setGenderPickerOpen] = useState(false);
   const [isReligionPickerOpen, setReligionPickerOpen] = useState(false);
@@ -45,20 +46,20 @@ export default function EmployeeDataIdentityScreen() {
   const [isDatePickerOpen, setDatePickerOpen] = useState(false);
   const [errors, setErrors] = useState<Partial<Record<keyof FormState, string>>>({});
 
-  useEffect(() => {
-    if (form || !profile.data) return;
-
-    const existing = profile.data.personalIdentity;
-    setForm({
-      nik: existing?.nik ?? '',
-      placeOfBirth: existing?.placeOfBirth ?? '',
-      dateOfBirth: existing?.dateOfBirth ? existing.dateOfBirth.slice(0, 10) : '',
-      gender: existing?.gender ?? null,
-      religion: existing?.religion ?? null,
-      maritalStatus: existing?.maritalStatus ?? null,
-      nationality: existing?.nationality ?? 'Indonesia',
-    });
-  }, [profile.data, form]);
+  const existing = profile.data?.personalIdentity;
+  const form: FormState | null =
+    draft ??
+    (profile.data
+      ? {
+          nik: existing?.nik ?? '',
+          placeOfBirth: existing?.placeOfBirth ?? '',
+          dateOfBirth: existing?.dateOfBirth ? existing.dateOfBirth.slice(0, 10) : '',
+          gender: existing?.gender ?? null,
+          religion: existing?.religion ?? null,
+          maritalStatus: existing?.maritalStatus ?? null,
+          nationality: existing?.nationality ?? 'Indonesia',
+        }
+      : null);
 
   const existingPhotoUrl = profile.data?.personalIdentity?.ktpPhotoUrl ?? null;
 

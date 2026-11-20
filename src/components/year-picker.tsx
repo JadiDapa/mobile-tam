@@ -1,4 +1,4 @@
-import { FlatList, Modal, Pressable, View } from 'react-native';
+import { FlatList, Modal, Pressable } from 'react-native';
 import { Text } from '@/components/ui/text';
 
 const YEARS_TO_SHOW = 6; // current year + a few years back

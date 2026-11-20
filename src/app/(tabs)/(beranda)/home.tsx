@@ -35,6 +35,7 @@ import {
   formatLateDuration,
   formatLongIndonesianDate,
   formatTime,
+  parseTimeToMinutes,
 } from "@/lib/date";
 import {
   useAttendanceHistoryQuery,
@@ -48,12 +49,6 @@ import {
   useSettingsQuery,
   useStartOvertimeMutation,
 } from "@/lib/queries";
-
-function parseTimeToMinutes(time: string) {
-  const [hours, minutes] = time.split(":").map(Number);
-  if (Number.isNaN(hours) || Number.isNaN(minutes)) return null;
-  return hours * 60 + minutes;
-}
 
 /** Sudah lewat jam pulang terjadwal hari ini — cuma jadi peringatan di UI, aturannya ditegakkan di server. */
 function isCheckInClosed(
@@ -178,14 +173,6 @@ export default function BerandaScreen() {
       : !hasCheckedOut
         ? { label: "Absen Pulang", disabled: false }
         : { label: "Absensi Hari Ini Selesai", disabled: true };
-
-  const monthStats = useMemo(() => {
-    const days = month.data?.days ?? [];
-    return {
-      totalHadir: days.filter((d) => d.checkIn).length,
-      telat: days.filter((d) => d.checkIn?.isLate).length,
-    };
-  }, [month.data]);
 
   const recentAttendance = useMemo<DayRecord[]>(
     () =>

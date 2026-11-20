@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { Modal, Pressable, useColorScheme, View } from 'react-native';
 import { Text } from '@/components/ui/text';
 import { Calendar, type DateData } from 'react-native-calendars';
@@ -63,9 +63,12 @@ export function DateRangePicker({
   const isDark = scheme === 'dark';
   const [draft, setDraft] = useState<{ start: string | null; end: string | null }>(value);
 
-  useEffect(() => {
+  // Reset the draft each time the sheet opens (adjusting state during render, not in an effect).
+  const [wasVisible, setWasVisible] = useState(visible);
+  if (visible !== wasVisible) {
+    setWasVisible(visible);
     if (visible) setDraft(value);
-  }, [visible, value]);
+  }
 
   function handleDayPress(day: DateData) {
     if (minDate && day.dateString < minDate) return;

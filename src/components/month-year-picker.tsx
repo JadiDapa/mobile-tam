@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { Modal, Pressable, View } from 'react-native';
 import { Text } from '@/components/ui/text';
 
@@ -21,12 +21,15 @@ export function MonthYearPicker({ visible, value, onClose, onApply }: MonthYearP
   const [draftYear, setDraftYear] = useState(year);
   const [draftMonth, setDraftMonth] = useState(month);
 
-  useEffect(() => {
+  // Reset the draft each time the sheet opens (adjusting state during render, not in an effect).
+  const [wasVisible, setWasVisible] = useState(visible);
+  if (visible !== wasVisible) {
+    setWasVisible(visible);
     if (visible) {
       setDraftYear(year);
       setDraftMonth(month);
     }
-  }, [visible, year, month]);
+  }
 
   const currentYear = new Date().getFullYear();
   const years = Array.from({ length: YEARS_TO_SHOW }, (_, index) => currentYear - index);

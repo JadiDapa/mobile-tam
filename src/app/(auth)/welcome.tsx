@@ -3,6 +3,7 @@ import { router } from "expo-router";
 import { Dimensions, Pressable, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
+import { ContactAdminDialog } from "@/components/contact-admin-dialog";
 import { Text } from "@/components/ui/text";
 
 const HERO_HEIGHT = Dimensions.get("window").height * 0.46;
@@ -59,11 +60,7 @@ export default function WelcomeScreen() {
             </Text>
           </Pressable>
 
-          <Pressable onPress={() => router.push("/request-account")} hitSlop={8}>
-            <Text className="text-center text-xs text-muted-foreground">
-              Belum punya akun? <Text className="font-medium text-primary">Ajukan pembuatan akun</Text>
-            </Text>
-          </Pressable>
+          <ContactAdminDialog textClassName="text-xs" />
         </View>
       </View>
     </View>

@@ -7,6 +7,7 @@ import { Text } from '@/components/ui/text';
 
 import { AnimatedIcon } from '@/components/animated-icon';
 import { AuthField, AuthPasswordField } from '@/components/auth-field';
+import { ContactAdminDialog } from '@/components/contact-admin-dialog';
 
 const GENERIC_ERROR = 'Email atau password salah';
 
@@ -101,11 +102,7 @@ export default function LoginScreen() {
           </Pressable>
         </View>
 
-        <Pressable onPress={() => router.push('/request-account')} hitSlop={8}>
-          <Text className="text-center text-sm text-muted-foreground">
-            Belum punya akun? <Text className="font-medium text-primary">Ajukan pembuatan akun</Text>
-          </Text>
-        </Pressable>
+        <ContactAdminDialog />
       </ScrollView>
     </KeyboardAvoidingView>
   );

@@ -3,9 +3,7 @@ import { useState } from 'react';
 import { Modal, Pressable, View } from 'react-native';
 import { Text } from '@/components/ui/text';
 
-function formatTime(date: Date) {
-  return `${String(date.getHours()).padStart(2, '0')}:${String(date.getMinutes()).padStart(2, '0')}`;
-}
+import { formatHourMinute } from '@/lib/date';
 
 type OvertimeEndDrawerProps = {
   visible: boolean;
@@ -72,11 +70,11 @@ export function OvertimeEndDrawer({
               <Text className="text-text">Batal</Text>
             </Pressable>
             <Pressable
-              onPress={() => onEnd(useCustomTime ? formatTime(endTime) : undefined)}
+              onPress={() => onEnd(useCustomTime ? formatHourMinute(endTime) : undefined)}
               disabled={submitting}
               className="flex-1 items-center rounded-xl bg-primary py-3">
               <Text className="font-medium text-primary-foreground">
-                {useCustomTime ? `Selesai Jam ${formatTime(endTime)}` : 'Selesai Sekarang'}
+                {useCustomTime ? `Selesai Jam ${formatHourMinute(endTime)}` : 'Selesai Sekarang'}
               </Text>
             </Pressable>
           </View>
